@@ -16,6 +16,7 @@ import sys
 import os.path
 import glob
 import argparse
+import shutil
 
 #OPTIONS
 # OpenCL vendor names and their short name
@@ -231,6 +232,10 @@ def ck_postprocess(i):
        gflops = gflops/time/1000.0/1000.0/1000.0
        bres['GFLOPS'] =gflops
 
+    for i in range(len(rt['run_output_files'])):
+         curr_out=rt['run_output_files'][i][:-5]+'_multiconf_'+d["arg_m"]+'_'+d["arg_n"] +'_'+d["arg_k"] +'.json'
+         if os.path.exists(rt['run_output_files'][i]):
+             shutil.copyfile(rt['run_output_files'][i],curr_out)
 
     bestdefstat={}
     defstat = {}
@@ -255,17 +260,19 @@ def ck_postprocess(i):
         d['db'] = 'na'
     rr={}
     rr['return']=0
-#    output_filename='tmp-ck-clblast-tune-'+d['kernel']+'-'+d['arg_m']+'-'+d['arg_n']+'-'+d['arg_k']+'-'+d['precision'] +'.json' 
+    
+    output_filename1='tmp-ck-clblast-tune-'+d['kernel']+'-multiconf-'+d['arg_m']+'-'+d['arg_n']+'-'+d['arg_k']+'-'+d['precision'] +'.json' 
     output_filename='tmp-ck-clblast-tune.json'
 ##    print output_filename
     if d.get('post_processed','')=='yes':
         rr=ck.save_json_to_file({'json_file':output_filename, 'dict':d})
+        rr=ck.save_json_to_file({'json_file':output_filename1, 'dict':d})
         if rr['return']>0: return rr
     else:
         rr['return']=1
         rr['error']='FAIL'
     print("[postprocessing] Exit code %s" %(rr['return']))
-    
+   
     return rr
 
 # Do not add anything here!
