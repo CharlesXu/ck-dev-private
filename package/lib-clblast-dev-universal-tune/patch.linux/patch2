@@ -12,7 +12,7 @@ index 0ef6d9a..196edbd 100644
 +      }
 +    },
 +    { // Imagination Technologies GPUs
-+      kDeviceTypeGPU, "Imagination Technologie", {
++      kDeviceTypeGPU, "Imagination Technologies", {
 +        { "default",                                         { {"XGEMM_MIN_INDIRECT_SIZE",64*64*64} } },
 +      }
 +    },
