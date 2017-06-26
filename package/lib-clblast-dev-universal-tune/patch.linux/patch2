@@ -1,0 +1,22 @@
+diff --git a/src/database/kernel_selection.hpp b/src/database/kernel_selection.hpp
+index 0ef6d9a..196edbd 100644
+--- a/src/database/kernel_selection.hpp
++++ b/src/database/kernel_selection.hpp
+@@ -52,6 +52,17 @@ const Database::DatabaseEntry KernelSelectionSingle = {
+         { "default",                                         { {"XGEMM_MIN_INDIRECT_SIZE",1280*1280*1280} } },
+       }
+     },
++    { // ARM GPUs
++      kDeviceTypeGPU, "ARM", {
++        { "default",                                         { {"XGEMM_MIN_INDIRECT_SIZE",128*128*128} } },
++      }
++    },
++    { // Imagination Technologies GPUs
++      kDeviceTypeGPU, "Imagination Technologies", {
++        { "default",                                         { {"XGEMM_MIN_INDIRECT_SIZE",64*64*64} } },
++      }
++    },
++
+     { // Default
+       kDeviceTypeAll, "default", {
+         { "default",                                         { {"XGEMM_MIN_INDIRECT_SIZE",512*512*512} } },
