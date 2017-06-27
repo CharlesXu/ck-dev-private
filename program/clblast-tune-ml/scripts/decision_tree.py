@@ -59,7 +59,7 @@ template <typename T>
         const size_t m, const size_t n, const size_t k,
         const T alpha, const size_t a_offset, const size_t a_ld,
         const size_t b_offset, const size_t b_ld,
-        const T beta, const size_t c_offset, const size_t c_ld){
+        const T beta, const size_t c_offset, const size_t c_ld, int *flag){
 
         std::vector<std::string> routines_vett = {"Copy","Pad","Transpose","Padtranspose","KernelSelection"};
 
@@ -76,25 +76,25 @@ template const std::vector<std::string> GetConf<float>(const Layout layout, cons
                 const Transpose b_transpose, const size_t m, const size_t n, const size_t k,
                 const float alpha, const size_t a_offset, const size_t a_ld,
                 const size_t b_offset, const size_t b_ld,
-                const float beta, const size_t c_offset, const size_t c_ld);
+                const float beta, const size_t c_offset, const size_t c_ld, int *flag);
 
 template const std::vector<std::string> GetConf<double>(const Layout layout, const Transpose a_transpose,
                 const Transpose b_transpose, const size_t m, const size_t n, const size_t k,
                 const double alpha, const size_t a_offset, const size_t a_ld,
                 const size_t b_offset, const size_t b_ld,
-                const double beta, const size_t c_offset, const size_t c_ld);
+                const double beta, const size_t c_offset, const size_t c_ld, int *flag);
 
 template const std::vector<std::string> GetConf<float2>(const Layout layout, const Transpose a_transpose,
                 const Transpose b_transpose, const size_t m, const size_t n, const size_t k,
                 const float2 alpha, const size_t a_offset, const size_t a_ld,
                 const size_t b_offset, const size_t b_ld,
-                const float2 beta, const size_t c_offset, const size_t c_ld);
+                const float2 beta, const size_t c_offset, const size_t c_ld, int *flag);
 
 template const std::vector<std::string> GetConf<double2>(const Layout layout, const Transpose a_transpose,
                 const Transpose b_transpose, const size_t m, const size_t n, const size_t k,
                 const double2 alpha, const size_t a_offset, const size_t a_ld,
                 const size_t b_offset, const size_t b_ld,
-                const double2 beta, const size_t c_offset, const size_t c_l);
+                const double2 beta, const size_t c_offset, const size_t c_l, int *flag);
 
 }
 #endif
@@ -108,10 +108,10 @@ template const std::vector<std::string> GetConf<double2>(const Layout layout, co
 # GENERATE TRAINING DATASET
 ################################################################################
 # Generate Input Dataset
-def generateInputDataset(num_samples=2):
+def generateInputDataset(num_samples=4):
     X=[]
     for i in range(num_samples):
-        curr={'m': 2**(i+8), 'n': 2**(i+8) ,'k' : 2**(i+8)}
+        curr={'m': 2**(i+2), 'n': 2**(i+2) ,'k' : 2**(i+2)}
         X.append(curr)
 
     return X
@@ -571,6 +571,17 @@ def tuneLibrary(training,output_dir,kernels_name):
 
 # GET TRAINING DATASET
 ################################################################################
+def loadModelMatrixes(csv_files_dir):
+    
+    m = set()
+    for i in os.listdir(csv_files_dir):
+        f=open(csv_files_dir + os.sep + i)
+        lines=f.read().split('\r\n')
+        for j in range(2,len(lines)):
+            m.add(lines[j])
+        f.close()
+    return m
+
 
 def getFeatureNames():
     feature_names = ['m', 'n', 'k', 'm * n * k', 'kernel_name']
@@ -722,6 +733,17 @@ def updateKernelOnJson(training_set, exp_dir, out_dir):
         f_in.close()
         f_out.close()
 
+def getRandomMatrixFromSet(dataset, num_samples, seed=None):
+    X=[]
+    random.seed(seed)
+    dim=len(dataset)
+    for i in range(num_samples):
+        e=random.sample(dataset,1)
+        e=e[0].split(',')
+        X.append({'m' : e[0], 'n' : e[1], 'k': e[2]})
+
+    return X
+
 # Create the Training Set
 def createTrainingSet(arg):
     
@@ -735,12 +757,16 @@ def createTrainingSet(arg):
     	TRAINING_SET = getTrainingFromFile(arg.fp)
     	return TRAINING_SET
     
-   
-    if arg.random_num != None:
+    if arg.csv_files_dir != None:
+        M = loadModelMatrixes(arg.csv_files_dir)
+        X = getRandomMatrixFromSet(M,5)
+    elif arg.random_num != None:
         X = getRandomMatrix(arg.random_num,arg.seed)
     else:
         X = generateInputDataset()
 
+
+    print X
     global output_dir
     global json_out_dir
     output_dir = '/tmp/exp'
@@ -888,7 +914,6 @@ def genSourceCode(library_root_path, kernel_name, d_tree,training_set):
     idx_namespace_line = db_content_row.index(namespace_line)
     for r in training_set['W']:
         inc_line = "#include \"database/kernels/" + r +".hpp\""
-	print inc_line
         db_content_row.insert(idx_namespace_line,inc_line)
     
 
@@ -934,11 +959,11 @@ def tree_to_code(tree, feature_names, training_set, out_file, routines_name):
             name = feature_name[node]
             threshold = tree_.threshold[node]
             value=("if( " + str(name) + " <= " + str(threshold) + " ) {\n")
-            print "{}if {} <= {}:".format(indent, name, threshold)
+            # print "{}if {} <= {}:".format(indent, name, threshold)
             out_file.write(value)
             recurse(tree_.children_left[node], depth + 1, selected_routines,out_file)
             out_file.write("}\n")
-            print "{}else:  # if {} > {}".format(indent, name, threshold)
+            # print "{}else:  # if {} > {}".format(indent, name, threshold)
             
             value=("else {\n ")
             out_file.write(value)
@@ -948,9 +973,15 @@ def tree_to_code(tree, feature_names, training_set, out_file, routines_name):
             # print tree_.value[node][0]
             # print getIdx(tree_.value[node][0])
             selected_routines.append(routines_name[getIdx(tree_.value[node][0])])
-            print "{}return {}".format(indent, training_set[getIdx(tree_.value[node][0])])
+            # print "{}return {}".format(indent, training_set[getIdx(tree_.value[node][0])])
             value = ("\n routines_vett.push_back(\"" + routines_name[getIdx(tree_.value[node][0])] + "\");\n")
-            print value
+            # print value
+            out_file.write(value)
+            if 'direct' in routines_name[getIdx(tree_.value[node][0])]:
+                value = ("\n *flag=1;\n")
+            else:
+                value = ("\n * flag = 0;\n")
+
             out_file.write(value)
             global num_leaf
             num_leaf += 1
@@ -980,6 +1011,7 @@ parser.add_argument("--kernel", action = "store", dest = "kernel_name", nargs ='
 parser.add_argument("--max_tree_depth", action = "store", type = int, dest = "tree_depth", help = "the maximum DT depth")
 parser.add_argument("--seed", type = int, help = "You can specify the initial seed for reproducibility. It only works with --random_samples")
 parser.add_argument("--quiet", action = "store_true", help = "It will suppress CK output")
+parser.add_argument("--csv", action="store", dest ="csv_files_dir", help="load Model matrix sizes from csv")
 myarg=parser.parse_args()
 
 
