@@ -274,7 +274,7 @@ def runPipeline(data_uoa, cmd_key, env, cdeps, rdeps, training_set):
         'choices_selection':[
             {"type":"loop-with-next", "choice":size_m, "default":"256"},
             {"type":"loop-with-next", "choice":size_n, "default":"256"},
-            {"type":"loop-with-next", "choice":size_n, "default":"256"},
+            {"type":"loop-with-next", "choice":size_k, "default":"256"},
             {"type" : "loop", "choice":[env['run']] , 'default':[env['run']]},
             {"type" : "loop", "choice":[env['num_of_strategy']] , 'default':[env['num_of_strategy']]},
             {"type" : "loop", "choice":[env['search_strategy']] , 'default':[env['search_strategy']]},
@@ -309,149 +309,6 @@ def runPipeline(data_uoa, cmd_key, env, cdeps, rdeps, training_set):
        return {'return':10, 'error':'pipeline failed ('+r.get('fail_reason','')+')'}
 
 
-
-def runPipeline2(data_uoa, cmd_key, env, cdeps, rdeps, training_set):
-
-    print "PIPELINE222222"
-	 # Detect basic platform info.
-    ii={'action':'detect',
-        'module_uoa':'platform',
-        'out':'out'}
-    r=ck.access(ii)
-    if r['return']>0: return r
-
-    # Host and target OS params.
-    hos=r['host_os_uoa']
-    hosd=r['host_os_dict']
-
-    tos=r['os_uoa']
-    tosd=r['os_dict']
-    tdid=r['device_id']
-
-    # Load  program meta and desc to check deps.
-    ii={'action':'load',
-        'module_uoa':'program',
-        'data_uoa': data_uoa}
-    rx=ck.access(ii)
-    if rx['return']>0: return rx
-    mm=rx['dict']
-
-     # Get compile-time and run-time deps.
-    cdeps=mm.get('compile_deps',{})
-    rdeps=mm.get('run_deps',{})
-
-    # # Merge rdeps with cdeps for setting up the pipeline (which uses
-    # # common deps), but tag them as "for_run_time".
-    for k in rdeps:
-        cdeps[k]=rdeps[k]
-        cdeps[k]['for_run_time']='yes'
-  
-    ii={'action' : 'pipeline',
-                
-        'target_os':tos,
-        'device_id':tdid,
-
-        'module_uoa' : 'program',
-        'data_uoa' : program,
-        'cmd_key' : cmd_key,
-        'prepare' : 'yes',
-        'dependencies' : cdeps,
-        'no_compiler_description' : 'yes',
-        'out' : 'con',
-        'no_state_check' : 'yes',
-        'flags' : '-O3',
-        'choices':{ 'env':{
-            'CK_CLBLAST_NUM_ITERATIONS': env['run'],
-            'CK_TUNER_NUM_OF_STRATEGIES': env['num_of_strategy'],
-            'CK_SEARCH_STRATEGY': env['search_strategy'],
-            'CK_PSO_SWARM_SIZE':8,
-            'CK_PSO_INF_G' : env['pso_inf_g'],
-            'CK_PSO_INF_L' : env['pso_inf_l'],
-            'CK_PSO_INF_R' : env['pso_inf_r']
-           	       
-           	}},
-        'cpu_freq':'max',
-        'gpu_freq':'max'
-        }
-    r=ck.access(ii)
-    
-    if r['return']>0: return r
-    fail=r.get('fail','')
-    if fail=='yes': return {'return':10, 'error':'pipeline failed ('+r.get('fail_reason','')+')'}
-
-    ready=r.get('ready','')
-    if ready!='yes': return {'return':11, 'error':'pipeline not ready'}
-
-
-    state=r['state']
-    tmp_dir=state['tmp_dir']
-    xcdeps=r.get('dependencies',{})
-    # Clean pipeline.
-    if 'ready' in r: del(r['ready'])
-    if 'fail' in r: del(r['fail'])
-    if 'return' in r: del(r['return'])
-    pipeline=copy.deepcopy(r)
-
-
-    record_repo='local'
-    record_uoa='create-training-dataset-' + cmd_key + '-' + platform
-    ck.out('---------------------------------------------------------------------------------------')
-    ck.out('Experiment - %s:%s' % (record_repo, record_uoa))
-    
-    size_m = []
-    size_n = []
-    size_k = []
-    
-    for j in range(len(training_set)):
-        size_m.append(training_set[j]['m'])
-        size_n.append(training_set[j]['n'])
-        size_k.append(training_set[j]['k'])
-
-    cpipeline=copy.deepcopy(pipeline)
-    ii={
-        'action':'autotune',
-        'module_uoa':'pipeline',
-        'data_uoa':'program',
-        'choices_order':[
-            [
-             '##env#CK_CLBLAST_MSIZE'
-            ],
-            [
-             '##env#CK_CLBLAST_NSIZE',
-            ],
-            [
-             '##env#CK_CLBLAST_KSIZE'
-            ],
-        ],
-        'choices_selection':[
-            {"type":"loop-with-next", "choice":size_m, "default":"256"},
-            {"type":"loop-with-next", "choice":size_n, "default":"256"},
-            {"type":"loop-with-next", "choice":size_n, "default":"256"}
-        ],
-        'features_keys_to_process':['##choices#*'],
-
-
-        'iterations':-1,
-        'repetitions':1,
-        'record':'yes',
-        'record_failed':'yes',
-        'record_params':{
-            'search_point_by_features':'yes'
-        },
-        'record_repo':record_repo,
-        'record_uoa':record_uoa,
-        'tags':['create-training-dataset', cmd_key, platform],
-        'pipeline': cpipeline,
-        'out':'con'
-
-    }
-    r=ck.access(ii)
-    
-    if r['return']>0: 
-        return r
-    fail=r.get('fail','')
-    if fail=='yes':
-       return {'return':10, 'error':'pipeline failed ('+r.get('fail_reason','')+')'}
 
 
     
@@ -744,6 +601,14 @@ def getRandomMatrixFromSet(dataset, num_samples, seed=None):
 
     return X
 
+def getAllMatrixFromSet(dataset):
+    X=[]
+    for e in dataset:
+        e=e.split(',')
+        X.append({'m' : e[0], 'n' : e[1], 'k': e[2]})
+    
+    return X
+
 # Create the Training Set
 def createTrainingSet(arg):
     
@@ -759,7 +624,8 @@ def createTrainingSet(arg):
     
     if arg.csv_files_dir != None:
         M = loadModelMatrixes(arg.csv_files_dir)
-        X = getRandomMatrixFromSet(M,5)
+        #X = getRandomMatrixFromSet(M,5)
+        X = getAllMatrixFromSet(M)
     elif arg.random_num != None:
         X = getRandomMatrix(arg.random_num,arg.seed)
     else:
@@ -767,6 +633,8 @@ def createTrainingSet(arg):
 
 
     print X
+
+    print "[INFO] : Training dataset len : " + str(len(X))
     global output_dir
     global json_out_dir
     output_dir = '/tmp/exp'
