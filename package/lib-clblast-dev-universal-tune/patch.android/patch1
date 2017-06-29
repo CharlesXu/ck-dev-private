@@ -1,0 +1,360 @@
+diff --git a/src/tuning/kernels/xgemm.cpp b/src/tuning/kernels/xgemm.cpp
+index 9b4cea8..a9ac3c6 100644
+--- a/src/tuning/kernels/xgemm.cpp
++++ b/src/tuning/kernels/xgemm.cpp
+@@ -18,6 +18,9 @@
+ 
+ #include "utilities/utilities.hpp"
+ #include "tuning/tuning.hpp"
++#define XGEMM_EXEC
++bool tStrategyFlag=true;
++#define DEFAULT_NUM_OF_STRATEGY 1
+ 
+ namespace clblast {
+ // =================================================================================================
+@@ -28,7 +31,8 @@ class TuneXgemm {
+  public:
+ 
+   // The representative kernel and the source code
+-  static std::string KernelFamily() { return (V==1) ? "xgemm_1" : "xgemm_2"; }
++  // static std::string KernelFamily() { return (V==1) ? "xgemm_1" : "xgemm_2"; }
++  static std::string KernelFamily() { switch(V){ case 1: return "xgemm_1"; case 2: case 3:return "xgemm_2";  }}
+   static std::string KernelName() { return "Xgemm"; }
+   static std::string GetSources() {
+     return
+@@ -41,7 +45,7 @@ class TuneXgemm {
+ 
+   // The list of arguments relevant for this routine
+   static std::vector<std::string> GetOptions() {
+-    return {kArgM, kArgN, kArgK, kArgAlpha, kArgBeta, kArgFraction};
++    return {kArgM, kArgN, kArgK, kArgAlpha, kArgBeta, kArgFraction,tStrategy, psoSwarmSize, psoInfG, psoInfL, psoInfR};
+   }
+ 
+   // Tests for valid arguments
+@@ -67,36 +71,38 @@ class TuneXgemm {
+   static void SetParameters(cltune::Tuner &tuner, const size_t id) {
+     if (V==1) { // limited subset of tuning parameters - but explorable exhaustively
+       tuner.AddParameter(id, "MWG", {16, 32, 64});
+-      tuner.AddParameter(id, "NWG", {16, 32, 64});
+-      tuner.AddParameter(id, "KWG", {32});
+-      tuner.AddParameter(id, "MDIMC", {8, 16, 32});
++      tuner.AddParameter(id, "NWG", {8, 16, 32, 64});
++      tuner.AddParameter(id, "KWG", {16,32,64});
++      tuner.AddParameter(id, "MDIMC", {4,8, 16, 32});
+       tuner.AddParameter(id, "NDIMC", {8, 16, 32});
+-      tuner.AddParameter(id, "MDIMA", {8, 16, 32});
++      tuner.AddParameter(id, "MDIMA", {4,8, 16, 32});
+       tuner.AddParameter(id, "NDIMB", {8, 16, 32});
+-      tuner.AddParameter(id, "KWI", {2});
+-      tuner.AddParameter(id, "VWM", {1, 2, 4});
++      tuner.AddParameter(id, "KWI", {1,2});
++      tuner.AddParameter(id, "VWM", {1, 2, 4,8,16});
+       tuner.AddParameter(id, "VWN", {1, 2, 4});
+-      tuner.AddParameter(id, "STRM", {0});
+-      tuner.AddParameter(id, "STRN", {0});
++      tuner.AddParameter(id, "STRM", {0,1});
++      tuner.AddParameter(id, "STRN", {0,1});
+       tuner.AddParameter(id, "SA", {0, 1});
+       tuner.AddParameter(id, "SB", {0, 1});
+     } // a lot more tuning parameters - has to be sampled randomly, too much to test all
+     else {
++      //RANDOM_SEARCH & PSO
+       tuner.AddParameter(id, "MWG", {16, 32, 64, 128});
+       tuner.AddParameter(id, "NWG", {16, 32, 64, 128});
+-      tuner.AddParameter(id, "KWG", {16, 32});
+-      tuner.AddParameter(id, "MDIMC", {8, 16, 32});
++      tuner.AddParameter(id, "KWG", {16, 32,64});
++      tuner.AddParameter(id, "MDIMC", {4,8, 16, 32});
+       tuner.AddParameter(id, "NDIMC", {8, 16, 32});
+-      tuner.AddParameter(id, "MDIMA", {8, 16, 32});
++      tuner.AddParameter(id, "MDIMA", {4,8, 16, 32});
+       tuner.AddParameter(id, "NDIMB", {8, 16, 32});
+-      tuner.AddParameter(id, "KWI", {2});
+-      tuner.AddParameter(id, "VWM", {1, 2, 4, 8});
++      tuner.AddParameter(id, "KWI", {1,2});
++      tuner.AddParameter(id, "VWM", {1, 2, 4, 8, 16});
+       tuner.AddParameter(id, "VWN", {1, 2, 4, 8});
+       tuner.AddParameter(id, "STRM", {0, 1});
+       tuner.AddParameter(id, "STRN", {0, 1});
+       tuner.AddParameter(id, "SA", {0, 1});
+       tuner.AddParameter(id, "SB", {0, 1});
+     }
++
+   }
+ 
+   // Sets the constraints
+@@ -190,10 +196,49 @@ void StartVariation(int argc, char *argv[]) {
+   }
+ }
+ 
++
+ // Main function (not within the clblast namespace)
+ int main(int argc, char *argv[]) {
++
++int num_of_strategies = DEFAULT_NUM_OF_STRATEGY;
++
++if(const char* env_p = std::getenv("CK_TUNER_NUM_OF_STRATEGIES"))
++{ 
++  num_of_strategies = atoi(env_p);
++  printf("CK_TUNER_NUM_OF_STRATEGIES is: %s\n", env_p );
++}
++else
++{
++  printf("CK_TUNER_NUM_OF_STRATEGIES is not defined\n");     
++}
++
++printf("num_of_strategies : %d\n",num_of_strategies );
++
++if( DEFAULT_NUM_OF_STRATEGY != num_of_strategies )
++{
++  //FACCIO PRIMA LA FULL SEARCH
+   StartVariation<1>(argc, argv);
+-  StartVariation<2>(argc, argv);
++}
++
++  auto command_line_args = clblast::RetrieveCommandLineArguments(argc, argv);
++  auto help = std::string{"* Options given/available:\n"};
++  auto localtStrategy = clblast::GetArgument(command_line_args, help, clblast::tStrategy, DEFAULT_STRATEGY); 
++  switch(localtStrategy)
++  {
++    case FULL_SEARCH_STRATEGY: 
++      StartVariation<1>(argc, argv);
++      break;
++    case RANDOM_SEARCH_STRATEGY: 
++      StartVariation<2>(argc, argv);
++      break;
++    case PSO_STRATEGY:
++      StartVariation<3>(argc, argv);
++      break;
++    case DVDT_STRATEGY:
++      StartVariation<2>(argc, argv);
++      break;
++  }
++
+   return 0;
+ }
+ 
+diff --git a/src/tuning/kernels/xgemm_direct.cpp b/src/tuning/kernels/xgemm_direct.cpp
+index e7a35b9..ab05be3 100644
+--- a/src/tuning/kernels/xgemm_direct.cpp
++++ b/src/tuning/kernels/xgemm_direct.cpp
+@@ -18,6 +18,10 @@
+ 
+ #include "utilities/utilities.hpp"
+ #include "tuning/tuning.hpp"
++#define XGEMM_EXEC
++bool tStrategyFlag=true;  
++#define DEFAULT_NUM_OF_STRATEGY 1 
++
+ 
+ namespace clblast {
+ // =================================================================================================
+@@ -41,7 +45,7 @@ class TuneXgemmDirect {
+ 
+   // The list of arguments relevant for this routine
+   static std::vector<std::string> GetOptions() {
+-    return {kArgM, kArgN, kArgK, kArgAlpha, kArgBeta, kArgFraction};
++    return {kArgM, kArgN, kArgK, kArgAlpha, kArgBeta, kArgFraction ,tStrategy, psoSwarmSize, psoInfG, psoInfL, psoInfR};
+   }
+ 
+   // Tests for valid arguments
+@@ -191,9 +195,45 @@ void StartVariation(int argc, char *argv[]) {
+ 
+ // Main function (not within the clblast namespace)
+ int main(int argc, char *argv[]) {
+-  StartVariation<1>(argc, argv);
+-  StartVariation<2>(argc, argv);
+-  return 0;
++
++int num_of_strategies = DEFAULT_NUM_OF_STRATEGY;
++
++if(const char* env_p = std::getenv("CK_TUNER_NUM_OF_STRATEGIES"))
++{
++  num_of_strategies = atoi(env_p);
++  printf("CK_TUNER_NUM_OF_STRATEGIES is: %s\n", env_p );
++}
++else
++{
++  printf("CK_TUNER_NUM_OF_STRATEGIES is not defined\n");
++}
++printf("num_of_strategies : %d\n",num_of_strategies );
++if( DEFAULT_NUM_OF_STRATEGY != num_of_strategies )
++{
++   //FACCIO PRIMA LA FULL SEARCH
++   StartVariation<1>(argc, argv);
++}
++
++auto command_line_args = clblast::RetrieveCommandLineArguments(argc, argv);
++auto help = std::string{"* Options given/available:\n"};
++auto localtStrategy = clblast::GetArgument(command_line_args, help, clblast::tStrategy, DEFAULT_STRATEGY);
++switch(localtStrategy)
++ {
++    case FULL_SEARCH_STRATEGY:
++      StartVariation<1>(argc, argv);
++      break;
++    case RANDOM_SEARCH_STRATEGY:
++     StartVariation<2>(argc, argv);
++     break;
++    case PSO_STRATEGY:
++     StartVariation<3>(argc, argv);
++     break;
++    case DVDT_STRATEGY:
++     StartVariation<2>(argc, argv);
++     break;
++  
++}
++ return 0;
+ }
+ 
+ // =================================================================================================
+diff --git a/src/tuning/tuning.hpp b/src/tuning/tuning.hpp
+index 2550443..35b320c 100644
+--- a/src/tuning/tuning.hpp
++++ b/src/tuning/tuning.hpp
+@@ -48,6 +48,11 @@ void Tuner(int argc, char* argv[]) {
+     if (o == kArgBeta)     { args.beta     = GetArgument(command_line_args, help, kArgBeta, GetScalar<T>()); }
+     if (o == kArgFraction) { args.fraction = GetArgument(command_line_args, help, kArgFraction, C::DefaultFraction()); }
+     if (o == kArgBatchCount) { args.batch_count = GetArgument(command_line_args, help, kArgBatchCount, C::DefaultBatchCount()); }
++    if (o == tStrategy)   {args.tStrategy   = GetArgument(command_line_args, help, tStrategy, DEFAULT_STRATEGY);  }
++    if (o == psoSwarmSize)   {args.psoSwarmSize   = GetArgument(command_line_args, help, psoSwarmSize, DEFAULT_PSO_SWARM);  }
++    if (o == psoInfG)   {args.psoInfG   = GetArgument(command_line_args, help, psoInfG, DEFAULT_PSO_G);  }
++    if (o == psoInfL)   {args.psoInfL   = GetArgument(command_line_args, help, psoInfL, DEFAULT_PSO_L);  }
++    if (o == psoInfR)   {args.psoInfR   = GetArgument(command_line_args, help, psoInfR, DEFAULT_PSO_R);  }
+   }
+   const auto num_runs = GetArgument(command_line_args, help, kArgNumRuns, C::DefaultNumRuns());
+ 
+@@ -93,13 +98,46 @@ void Tuner(int argc, char* argv[]) {
+ 
+   // Use full-search to explore all parameter combinations or random-search to search only a part of
+   // the parameter values. The fraction is set as a command-line argument.
+-  if (args.fraction == 1.0 || args.fraction == 0.0) {
++  #ifdef XGEMM_EXEC
++  
++  if(tStrategyFlag)
++  {
++   auto localtStrategy = args.tStrategy;  
++
++    if (args.fraction == 1.0 || args.fraction == 0.0) 
++    { 
++     localtStrategy = FULL_SEARCH_STRATEGY; 
++    }
++    switch (localtStrategy)
++    {
++      case FULL_SEARCH_STRATEGY: 
++        tuner.UseFullSearch();
++        break;
++
++      case RANDOM_SEARCH_STRATEGY: 
++          tuner.UseRandomSearch(1.0/args.fraction);
++        break;
++      case PSO_STRATEGY: 
++          tuner.UsePSO(1.0/args.fraction, args.psoSwarmSize, args.psoInfG, args.psoInfL, args.psoInfR);
++        break;
++      case DVDT_STRATEGY:
++      default: 
++        tuner.UseFullSearch();
++    }
++  }
++
++  #else
++
++  if (args.fraction == 1.0 || args.fraction == 0.0) 
++  {
+     tuner.UseFullSearch();
+   }
+-  else {
++  else 
++  {
+     tuner.UseRandomSearch(1.0/args.fraction);
+   }
+ 
++  #endif
+   // Set extra settings for specific defines. This mimics src/routine.cc.
+   auto defines = std::string{""};
+   if (isAMD && isGPU) {
+@@ -162,6 +200,8 @@ void Tuner(int argc, char* argv[]) {
+     if (o == kArgBatchCount) { metadata.push_back({"arg_batch_count", ToString(args.batch_count)}); }
+   }
+   tuner.PrintJSON("clblast_"+C::KernelFamily()+"_"+precision_string+".json", metadata);
++ 
++
+ }
+ 
+ // =================================================================================================
+diff --git a/src/utilities/utilities.hpp b/src/utilities/utilities.hpp
+index 0305135..287958b 100644
+--- a/src/utilities/utilities.hpp
++++ b/src/utilities/utilities.hpp
+@@ -28,6 +28,21 @@
+ #include "utilities/clblast_exceptions.hpp"
+ #include "utilities/msvc.hpp"
+ 
++#define FULL_SEARCH_STRATEGY 0
++#define RANDOM_SEARCH_STRATEGY 1
++#define PSO_STRATEGY 2
++#define DVDT_STRATEGY 3
++
++#define DEFAULT_STRATEGY 0
++
++#define DEFAULT_PSO_SWARM 32
++#define DEFAULT_PSO_G 0.3
++#define DEFAULT_PSO_L 0.3
++#define DEFAULT_PSO_R 0.3
++
++#ifdef XGEMM_EXEC
++extern bool tStrategyFlag;
++#endif
+ namespace clblast {
+ // =================================================================================================
+ 
+@@ -47,6 +62,12 @@ constexpr auto kUnknownError = -999;
+ 
+ // =================================================================================================
+ 
++constexpr auto tStrategy = "strategy";
++constexpr auto psoSwarmSize = "psoSwarmSize";
++constexpr auto  psoInfG = "psoInfG";
++constexpr auto  psoInfL = "psoInfL";
++constexpr auto  psoInfR = "psoInfR";
++
+ // The routine-specific arguments in string form
+ constexpr auto kArgM = "m";
+ constexpr auto kArgN = "n";
+@@ -172,13 +193,13 @@ struct Arguments {
+   T beta = ConstantOne<T>();
+   // Batch-specific arguments
+   size_t batch_count = 1;
+-  std::vector<size_t> x_offsets; // = {0};
+-  std::vector<size_t> y_offsets; // = {0};
+-  std::vector<size_t> a_offsets; // = {0};
+-  std::vector<size_t> b_offsets; // = {0};
+-  std::vector<size_t> c_offsets; // = {0};
+-  std::vector<T> alphas; // = {ConstantOne<T>()};
+-  std::vector<T> betas; // = {ConstantOne<T>()};
++  std::vector<size_t> x_offsets = {0};
++  std::vector<size_t> y_offsets = {0};
++  std::vector<size_t> a_offsets = {0};
++  std::vector<size_t> b_offsets = {0};
++  std::vector<size_t> c_offsets = {0};
++  std::vector<T> alphas = {ConstantOne<T>()};
++  std::vector<T> betas = {ConstantOne<T>()};
+   // Sizes
+   size_t x_size = 1;
+   size_t y_size = 1;
+@@ -206,8 +227,16 @@ struct Arguments {
+   bool print_help = false;
+   bool silent = false;
+   bool no_abbrv = false;
++
++  int tStrategy = DEFAULT_STRATEGY;
++  size_t psoSwarmSize = DEFAULT_PSO_SWARM;
++  double psoInfG = DEFAULT_PSO_G;
++  double psoInfL = DEFAULT_PSO_L;
++  double psoInfR = DEFAULT_PSO_R;
+ };
+ 
++
++
+ // Structure containing all possible buffers for test clients
+ template <typename T>
+ struct Buffers {
