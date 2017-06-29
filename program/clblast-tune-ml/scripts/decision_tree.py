@@ -583,7 +583,7 @@ def updateKernelOnJson(training_set, exp_dir, out_dir):
         json_data = json.load(f_in)
 
         
-        json_data['kernel_family'] = training_set['W'][i]
+        json_data['kernel_family'] = training_set['W'][i]['kernel']
 
         f_out = open(out_dir + os.sep + e['file_path'],'w')
         json.dump(json_data,f_out)
@@ -715,7 +715,7 @@ def generateRoutinesNames(kernels_name, training_set):
         curr= kernelToFamily(kernels_name[idx]) + str(count_vett[idx])
         #curr= kernels_name[idx].capitalize() + str(count_vett[idx])
         count_vett[idx] +=1
-        routines_names.append(curr)
+        routines_names.append({'kernel':curr, 'used': 0})
 
     return routines_names
 
@@ -781,20 +781,21 @@ def genSourceCode(library_root_path, kernel_name, d_tree,training_set):
 
     idx_namespace_line = db_content_row.index(namespace_line)
     for r in training_set['W']:
-        inc_line = "#include \"database/kernels/" + r +".hpp\""
-        db_content_row.insert(idx_namespace_line,inc_line)
+        if r['used'] == 1:
+            inc_line = "#include \"database/kernels/" + r['kernel'] +".hpp\""
+            db_content_row.insert(idx_namespace_line,inc_line)
     
 
     idx_db_init_line = db_content_row.index(db_init_line) + 1
     for r in training_set['W']:
-        
-        half = "database::"+ r +'Half, '
-        single = "database::"+ r +'Single, '
-        double = "database::"+ r +'Double, '
-        cpx_single = "database::"+ r +'ComplexSingle, '
-        cpx_double = "database::"+ r +'ComplexDouble,'
-        line = half + single + double + cpx_single + cpx_double
-        db_content_row.insert(idx_db_init_line,line)
+        if r['used'] == 1:
+            half = "database::"+ r['kernel'] +'Half, '
+            single = "database::"+ r['kernel'] +'Single, '
+            double = "database::"+ r['kernel'] +'Double, '
+            cpx_single = "database::"+ r['kernel'] +'ComplexSingle, '
+            cpx_double = "database::"+ r['kernel'] +'ComplexDouble,'
+            line = half + single + double + cpx_single + cpx_double
+            db_content_row.insert(idx_db_init_line,line)
     
     #Replace the old file content with the new one
     db_cpp_file.seek(0,0)
@@ -840,16 +841,17 @@ def tree_to_code(tree, feature_names, training_set, out_file, routines_name):
         else:
             # print tree_.value[node][0]
             # print getIdx(tree_.value[node][0])
-            selected_routines.append(routines_name[getIdx(tree_.value[node][0])])
+            selected_routines.append(routines_name[getIdx(tree_.value[node][0])]['kernel'])
             # print "{}return {}".format(indent, training_set[getIdx(tree_.value[node][0])])
-            value = ("\n routines_vett.push_back(\"" + routines_name[getIdx(tree_.value[node][0])] + "\");\n")
+            value = ("\n routines_vett.push_back(\"" + routines_name[getIdx(tree_.value[node][0])]['kernel'] + "\");\n")
             # print value
             out_file.write(value)
-            if 'direct' in routines_name[getIdx(tree_.value[node][0])]:
+            if 'direct' in routines_name[getIdx(tree_.value[node][0])]['kernel']:
                 value = ("\n *flag=1;\n")
             else:
                 value = ("\n * flag = 0;\n")
 
+            routines_name[getIdx(tree_.value[node][0])]['used'] = 1
             out_file.write(value)
             global num_leaf
             num_leaf += 1
