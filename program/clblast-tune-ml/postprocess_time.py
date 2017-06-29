@@ -77,8 +77,9 @@ def ck_postprocess(i):
     if ((c1 == 0) and (c2 == 0)):
         r['return'] = 0
         print("[postprocessing] Unable to read json output")
-        r['return'] = 1;
-        return r;
+        r['return'] = 1
+        r['error'] = "Unable to read json"
+        return r
     if ((c1)== 0):
         rj1 = rj2
     #### CREATE UNIQUE OUTPUT
