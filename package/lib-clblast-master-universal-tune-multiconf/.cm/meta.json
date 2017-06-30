@@ -92,7 +92,6 @@
     "clblast", 
     "tune", 
     "clblast-tune", 
-    "vmaster", 
     "vdev",
     "ml",
     "multiconf"
