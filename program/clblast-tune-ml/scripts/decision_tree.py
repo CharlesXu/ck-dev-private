@@ -732,9 +732,9 @@ def genSourceCode(library_root_path, kernel_name, d_tree,training_set):
     	exit(1)
 
     
-    for e in os.listdir(library_root_path):
-        if kernel_name == e[:-4]: # remove .hpp
-    	    print e
+    # for e in os.listdir(library_root_path):
+    #     if kernel_name == e[:-4]: # remove .hpp
+    # 	    print e
     	
 
 
@@ -853,6 +853,8 @@ def tree_to_code(tree, feature_names, training_set, out_file, routines_name):
 
             routines_name[getIdx(tree_.value[node][0])]['used'] = 1
             out_file.write(value)
+            out_file.write("printf(\"" +  routines_name[getIdx(tree_.value[node][0])]['kernel'] +" \n\");")
+
             global num_leaf
             num_leaf += 1
 
@@ -900,5 +902,5 @@ treePlot(d_tree,'/tmp/prova.pdf')
 kernel_name ="xgemm"
 
 clblast_root = myarg.clblast_root if myarg.clblast_root != None else "/home/marco/CK_TOOLS/lib-clblast-tune-master-gcc-6.2.0-linux-32/src"
-genSourceCode(clblast_root, kernel_name,	d_tree,TRAINING_SET)
+genSourceCode(clblast_root, myarg.kernel_name,	d_tree,TRAINING_SET)
 
