@@ -415,11 +415,39 @@ def tuneLibrary(training,output_dir,kernels_name):
 
     exp_dir=r['lst'][0]['path']
     exp_dir = exp_dir + '/tmp'
-    for e in os.listdir(exp_dir):
-        if kernels_name[0] in e and 'multiconf' in e :
-            copyfile(exp_dir + os.sep + e , output_dir + os.sep + e)
+
+    copyBests(exp_dir,output_dir)
+    # for e in os.listdir(exp_dir):
+    #     if kernels_name[0] in e and 'multiconf' in e :
+    #         copyfile(exp_dir + os.sep + e , output_dir + os.sep + e)
     return 0
 
+def getGFlops(exp_dir, inp):
+    f=open(exp_dir + os.sep + inp)
+    jdata=json.load(f)
+    if 'GFLOPS' in jdata['statistics']['best_configuration']:
+        print jdata['statistics']['best_configuration']['GFLOPS']
+        return jdata['statistics']['best_configuration']['GFLOPS']
+    else:
+        print "Not found"
+        return 0.0
+
+
+def copyBests(exp_dir, out_dir):
+    for f in os.listdir(exp_dir):
+        if 'tmp-ck-clblast-tune-xgemm_direct' in f:
+            f_dir=f
+            f_und=f.replace('_direct','')
+            gflops_dir=getGFlops(exp_dir,f_dir)
+            gflops_und=getGFlops(exp_dir,f_und)
+            if gflops_dir > gflops_und:
+                copyfile(exp_dir + os.sep + f_dir , output_dir + os.sep + f_dir)
+            elif gflops_und > gflops_dir:
+                copyfile(exp_dir + os.sep + f_und , output_dir + os.sep + f_und)
+            else:
+                if gflops_dir != 0.0:
+                    copyfile(exp_dir + os.sep + f_dir , output_dir + os.sep + f_dir)
+                    copyfile(exp_dir + os.sep + f_und , output_dir + os.sep + f_und)
 
 
 
