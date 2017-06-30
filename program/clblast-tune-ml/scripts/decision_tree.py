@@ -730,11 +730,6 @@ def genSourceCode(library_root_path, kernel_name, d_tree,training_set):
     if not os.path.exists(library_root_path):
     	print "[ERROR] : invalid library_root_path"
     	exit(1)
-
-    
-    # for e in os.listdir(library_root_path):
-    #     if kernel_name == e[:-4]: # remove .hpp
-    # 	    print e
     	
 
 
@@ -853,7 +848,7 @@ def tree_to_code(tree, feature_names, training_set, out_file, routines_name):
 
             routines_name[getIdx(tree_.value[node][0])]['used'] = 1
             out_file.write(value)
-            out_file.write("printf(\"" +  routines_name[getIdx(tree_.value[node][0])]['kernel'] +" \n\");")
+            out_file.write("printf(\"" +  routines_name[getIdx(tree_.value[node][0])]['kernel'] +"\");\n")
 
             global num_leaf
             num_leaf += 1
