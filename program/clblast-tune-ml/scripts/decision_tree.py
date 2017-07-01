@@ -22,6 +22,7 @@ import pydotplus
 import graphviz
 import random
 import sys
+import glob
 
 
 
@@ -411,7 +412,7 @@ def tuneLibrary(training,output_dir,kernels_name):
         }
     for j in range(len(kernels_name)):
         cmd_key = kernels_name[j] + '-fp32'
-        runPipeline(program, cmd_key, env, cdeps, rdeps, training)
+        # runPipeline(program, cmd_key, env, cdeps, rdeps, training)
 
     exp_dir=r['lst'][0]['path']
     exp_dir = exp_dir + '/tmp'
@@ -432,6 +433,20 @@ def getGFlops(exp_dir, inp):
         print "Not found"
         return 0.0
 
+def getClFiles(exp_dir,fin):
+    s=fin.split('-')
+    kernel=s[4]
+    m=s[6]
+    n=s[7]
+    s= s[8].split('.')
+    k=s[0]
+    
+    expr=exp_dir + os.sep + 'clblast_'+ kernel + '_[1,2]_*_multiconf_' + m + '_' + n + '_' + k + '.json'
+    f = glob.glob(expr)
+    f = f[0].split(os.sep)
+    l = len(f)
+
+    return f[(l-1)]
 
 def copyBests(exp_dir, out_dir):
     for f in os.listdir(exp_dir):
@@ -440,14 +455,20 @@ def copyBests(exp_dir, out_dir):
             f_und=f.replace('_direct','')
             gflops_dir=getGFlops(exp_dir,f_dir)
             gflops_und=getGFlops(exp_dir,f_und)
+            cl_dir = getClFiles(exp_dir,f_dir)
+            cl_und = getClFiles(exp_dir,f_und)
             if gflops_dir > gflops_und:
                 copyfile(exp_dir + os.sep + f_dir , output_dir + os.sep + f_dir)
+                copyfile(exp_dir + os.sep + cl_dir , output_dir + os.sep + cl_dir)
             elif gflops_und > gflops_dir:
                 copyfile(exp_dir + os.sep + f_und , output_dir + os.sep + f_und)
+                copyfile(exp_dir + os.sep + cl_und , output_dir + os.sep + cl_und)
             else:
                 if gflops_dir != 0.0:
                     copyfile(exp_dir + os.sep + f_dir , output_dir + os.sep + f_dir)
                     copyfile(exp_dir + os.sep + f_und , output_dir + os.sep + f_und)
+                    copyfile(exp_dir + os.sep + cl_dir , output_dir + os.sep + cl_dir)
+                    copyfile(exp_dir + os.sep + cl_und , output_dir + os.sep + cl_und)
 
 
 
