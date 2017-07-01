@@ -412,7 +412,7 @@ def tuneLibrary(training,output_dir,kernels_name):
         }
     for j in range(len(kernels_name)):
         cmd_key = kernels_name[j] + '-fp32'
-        # runPipeline(program, cmd_key, env, cdeps, rdeps, training)
+        runPipeline(program, cmd_key, env, cdeps, rdeps, training)
 
     exp_dir=r['lst'][0]['path']
     exp_dir = exp_dir + '/tmp'
