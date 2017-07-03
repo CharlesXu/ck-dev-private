@@ -109,11 +109,13 @@ template const std::vector<std::string> GetConf<double2>(const Layout layout, co
 # GENERATE TRAINING DATASET
 ################################################################################
 # Generate Input Dataset
-def generateInputDataset(num_samples=4):
+def generateInputDataset(num_samples=10):
     X=[]
     for i in range(num_samples):
-        curr={'m': 2**(i+2), 'n': 2**(i+2) ,'k' : 2**(i+2)}
-        X.append(curr)
+        for j in range(num_samples):
+            for y in range(num_samples):
+                curr={'m': 2**(i+1), 'n': 2**(j+1) ,'k' : 2**(y+1)}
+                X.append(curr)
 
     return X
 
