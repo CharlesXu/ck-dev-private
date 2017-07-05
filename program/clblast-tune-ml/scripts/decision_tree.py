@@ -68,10 +68,42 @@ template <typename T>
         """
 
 
-
-footer = """ 
+close_fun = """
 return routines_vett;
 }
+"""
+
+acc_fun = """
+const std::vector<std::string> updateRoutinesVett(std::string s, int * flag)
+{ 
+  std::vector<std::string> routines_vett = {"Copy","Pad","Transpose",
+  "Padtranspose","KernelSelection"};
+    
+    routines_vett.push_back(s);
+    if( s.compare("Xgemmdirect") <= 0)
+    {
+        *flag = 1;
+    }
+    else
+    {
+        *flag = 0;
+    }
+
+    return routines_vett;
+}
+
+"""
+
+aux_fun_header = """
+const std::vector<std::string> getRoutinesSet()
+{
+
+
+"""
+
+
+
+footer = """ 
 
 template const std::vector<std::string> GetConf<float>(const Layout layout, const Transpose a_transpose,
                 const Transpose b_transpose, const size_t m, const size_t n, const size_t k,
@@ -97,6 +129,7 @@ template const std::vector<std::string> GetConf<double2>(const Layout layout, co
                 const size_t b_offset, const size_t b_ld,
                 const double2 beta, const size_t c_offset, const size_t c_l, int *flag);
 
+
 }
 #endif
 """
@@ -109,12 +142,12 @@ template const std::vector<std::string> GetConf<double2>(const Layout layout, co
 # GENERATE TRAINING DATASET
 ################################################################################
 # Generate Input Dataset
-def generateInputDataset(num_samples=10):
+def generateInputDataset(num_samples=6):
     X=[]
     for i in range(num_samples):
         for j in range(num_samples):
             for y in range(num_samples):
-                curr={'m': 2**(i+1), 'n': 2**(j+1) ,'k' : 2**(y+1)}
+                curr={'m': 2**(i+6), 'n': 2**(j+6) ,'k' : 2**(y+6)}
                 X.append(curr)
 
     return X
@@ -406,7 +439,7 @@ def tuneLibrary(training,output_dir,kernels_name):
     env ={ 
         	'run' : run,
         	'num_of_strategy' : 1,
-        	'search_strategy' : 2,
+        	'search_strategy' : 0,
         	'pso_swarm_size' : 8,
         	'pso_inf_g' : 0.3,
         	'pso_inf_l' : 0.6,
@@ -612,7 +645,7 @@ def getTrainingFromDirectory(kernels_array,output_dir):
 # DUMP TRAINING DATASET
 ################################################################################
 
-def dumpTrainingToFile(training_set, output_file_path):
+def dumpTrainingToFile(training_set, output_file_path='/tmp/out.json'):
     out_file = open(output_file_path)
     json.dump(training_set,out_file)
     ou.close()
@@ -789,6 +822,9 @@ def genSourceCode(library_root_path, kernel_name, d_tree,training_set):
 
    
     global header
+    global close_fun
+    global acc_fun
+    global aux_fun_header
     global footer
     global output_dir
     global json_out_dir
@@ -797,6 +833,32 @@ def genSourceCode(library_root_path, kernel_name, d_tree,training_set):
 
     #Inference function body
     tree_to_code(d_tree, getFeatureNames(), training_set['X'], tmp_file, training_set['W'])
+
+    #Write close_fun
+    tmp_file.write(close_fun)
+
+    #Write Accurancy function
+    tmp_file.write(acc_fun)
+
+    #Write aux_fun_header
+    tmp_file.write(aux_fun_header)
+
+    value = """ std::vector<std::string> routines_vett = { """
+    comma=0
+    for r in training_set['W']:
+        if comma == 1:
+            value += ','
+            comma = 0
+        if r['used'] == 1:
+            value += "\"" + r['kernel'] + "\""
+            comma=1
+    
+    value+='};'
+    
+    tmp_file.write(value)
+
+    #Write close_fun
+    tmp_file.write(close_fun)
 
     #Write class footer stuff
     tmp_file.write(footer) 
@@ -930,6 +992,7 @@ parser.add_argument("--max_tree_depth", action = "store", type = int, dest = "tr
 parser.add_argument("--seed", type = int, help = "You can specify the initial seed for reproducibility. It only works with --random_samples")
 parser.add_argument("--quiet", action = "store_true", help = "It will suppress CK output")
 parser.add_argument("--csv", action="store", dest ="csv_files_dir", help="load Model matrix sizes from csv")
+parser.add_argument("--O", action = "store", dest = "out_json_file", help = "dump the training set on file")
 myarg=parser.parse_args()
 
 
@@ -949,4 +1012,5 @@ kernel_name ="xgemm"
 
 clblast_root = myarg.clblast_root if myarg.clblast_root != None else "/home/marco/CK_TOOLS/lib-clblast-tune-master-gcc-6.2.0-linux-32/src"
 genSourceCode(clblast_root, myarg.kernel_name,	d_tree,TRAINING_SET)
+dumpTrainingToFile(training_set, myarg.out_json_file)
 
