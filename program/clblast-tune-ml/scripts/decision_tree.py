@@ -23,6 +23,7 @@ import graphviz
 import random
 import sys
 import glob
+import math
 
 
 
@@ -79,14 +80,15 @@ const std::vector<std::string> updateRoutinesVett(std::string s, int * flag)
   std::vector<std::string> routines_vett = {"Copy","Pad","Transpose",
   "Padtranspose","KernelSelection"};
     
+    fprintf(stderr,"%s\n",s.c_str());
     routines_vett.push_back(s);
     if( s.compare("Xgemmdirect") <= 0)
     {
-        *flag = 1;
+        *flag = 0;
     }
     else
     {
-        *flag = 0;
+        *flag = 1;
     }
 
     return routines_vett;
@@ -447,7 +449,7 @@ def tuneLibrary(training,output_dir,kernels_name):
         }
     for j in range(len(kernels_name)):
         cmd_key = kernels_name[j] + '-fp32'
-        runPipeline(program, cmd_key, env, cdeps, rdeps, training)
+        #runPipeline(program, cmd_key, env, cdeps, rdeps, training)
 
     exp_dir=r['lst'][0]['path']
     exp_dir = exp_dir + '/tmp'
@@ -459,10 +461,13 @@ def tuneLibrary(training,output_dir,kernels_name):
     return 0
 
 def getGFlops(exp_dir, inp):
+    if not os.path.isfile(exp_dir + os.sep + inp):
+        print "Not found"
+        return 0.0
     f=open(exp_dir + os.sep + inp)
     jdata=json.load(f)
     if 'GFLOPS' in jdata['statistics']['best_configuration']:
-        print jdata['statistics']['best_configuration']['GFLOPS']
+        # print jdata['statistics']['best_configuration']['GFLOPS']
         return jdata['statistics']['best_configuration']['GFLOPS']
     else:
         print "Not found"
@@ -478,6 +483,8 @@ def getClFiles(exp_dir,fin):
     
     expr=exp_dir + os.sep + 'clblast_'+ kernel + '_[1,2]_*_multiconf_' + m + '_' + n + '_' + k + '.json'
     f = glob.glob(expr)
+    if len(f) == 0:
+        return '/dev/null'
     f = f[0].split(os.sep)
     l = len(f)
 
@@ -584,7 +591,7 @@ def getTrainingFromDirectory(kernels_array,output_dir):
 
         kernel = d['kernel_family']
         kernel = kernel[:-2]
-        print "KERNEL : " + kernel
+        # print "KERNEL : " + kernel
         precision = d['precision']
         device = d['device']
         device_type = d['device_type']
@@ -608,15 +615,15 @@ def getTrainingFromDirectory(kernels_array,output_dir):
             parameters = None
             time = sys.float_info.max
 
-        print e
-        print gflops
+        # print e
+        # print gflops
         kernel_id = getKernelId(kernels_array, kernel)
       	#print kernelId
         count +=1
         # NOTE : For now we use only m, n, k as features and gflops as labels
         X.append([ m,n,k,m*n*k ])
         #X.append({'m': m, 'n' : n , 'k' : k})
-        Y.append(str(gflops))
+        Y.append(str(math.ceil(gflops)))
         Z.append({
         	'm': m, 
         	'n' : n , 
@@ -646,9 +653,9 @@ def getTrainingFromDirectory(kernels_array,output_dir):
 ################################################################################
 
 def dumpTrainingToFile(training_set, output_file_path='/tmp/out.json'):
-    out_file = open(output_file_path)
+    out_file = open(output_file_path,'w')
     json.dump(training_set,out_file)
-    ou.close()
+    out_file.close()
 
 def treePlot(d_tree, output_file_path):
     out_file = open('/tmp/prova.dot','w')
@@ -696,15 +703,15 @@ def getAllMatrixFromSet(dataset):
 # Create the Training Set
 def createTrainingSet(arg):
     
-    TRAINING_SET=[]
+    DATASET=[]
     
     if arg.training_url != None :
-        TRAINING_SET = getTrainingFromUrl(arg.training_url)
-        return TRAINING_SET
+        DATASET = getTrainingFromUrl(arg.training_url)
+        return DATASET
 
     if arg.fp != None:
-    	TRAINING_SET = getTrainingFromFile(arg.fp)
-    	return TRAINING_SET
+    	DATASET = getTrainingFromFile(arg.fp)
+    	return DATASET
     
     if arg.csv_files_dir != None:
         M = loadModelMatrixes(arg.csv_files_dir)
@@ -716,7 +723,7 @@ def createTrainingSet(arg):
         X = generateInputDataset()
 
 
-    print X
+    # print X
 
     print "[INFO] : Training dataset len : " + str(len(X))
     global output_dir
@@ -735,28 +742,36 @@ def createTrainingSet(arg):
     	os.makedirs(json_out_dir)
     else:
     	print "[INFO] : " + json_out_dir + " exists"
-   
+    
+
     r = tuneLibrary(X,output_dir,arg.kernel_name)
     if r > 0:
         print "[FATAL] : exit"
         exit(1)
 
 
-    TRAINING_SET = getTrainingFromDirectory(arg.kernel_name,output_dir)
-    routines_names = generateRoutinesNames(arg.kernel_name,TRAINING_SET['Z'])
+    DATASET = getTrainingFromDirectory(arg.kernel_name,output_dir)
+    routines_names = generateRoutinesNames(arg.kernel_name,DATASET['Z'])
 
-    TRAINING_SET['W'] = routines_names
-    updateKernelOnJson(TRAINING_SET,output_dir,json_out_dir)
-    print "X"
-    print TRAINING_SET['X']
-    print "Y"
-    print TRAINING_SET['Y']
-    print "W"
-    print TRAINING_SET['W']
-    print "Z"
-    print TRAINING_SET['Z']
+    DATASET['W'] = routines_names
     
-    return TRAINING_SET
+
+    ratio = 50
+    if myarg.ratio != None:
+        ratio = int(myarg.ratio)
+        DATASET = splitDataset(DATASET, ratio)
+
+    updateKernelOnJson(DATASET['TRAINING'],output_dir,json_out_dir)
+    # print "X"
+    # print TRAINING_SET['X']
+    # print "Y"
+    # print TRAINING_SET['Y']
+    # print "W"
+    # print TRAINING_SET['W']
+    # print "Z"
+    # print TRAINING_SET['Z']
+    
+    return DATASET
 
 
 ################################################################################
@@ -897,12 +912,13 @@ def genSourceCode(library_root_path, kernel_name, d_tree,training_set):
     idx_db_init_line = db_content_row.index(db_init_line) + 1
     for r in training_set['W']:
         if r['used'] == 1:
-            half = "database::"+ r['kernel'] +'Half, '
+            # half = "database::"+ r['kernel'] +'Half, '
             single = "database::"+ r['kernel'] +'Single, '
-            double = "database::"+ r['kernel'] +'Double, '
-            cpx_single = "database::"+ r['kernel'] +'ComplexSingle, '
-            cpx_double = "database::"+ r['kernel'] +'ComplexDouble,'
-            line = half + single + double + cpx_single + cpx_double
+            # double = "database::"+ r['kernel'] +'Double, '
+            # cpx_single = "database::"+ r['kernel'] +'ComplexSingle, '
+            # cpx_double = "database::"+ r['kernel'] +'ComplexDouble,'
+            # line = half + single + double + cpx_single + cpx_double
+            line = single
             db_content_row.insert(idx_db_init_line,line)
     
     #Replace the old file content with the new one
@@ -971,6 +987,73 @@ def tree_to_code(tree, feature_names, training_set, out_file, routines_name):
     return selected_routines
 
 
+def splitDataset(dataset, ratio):
+    #ratio tra 0 e 100
+    if ratio > 100 or ratio < 0 : 
+        print("[ERROR] : invalid ratio")
+        exit(1)
+    random.seed(1)
+    TRAINING = []
+    TEST = []
+    SET = []
+    dataset_len = len(dataset['X'])
+    training_dim = int(math.ceil(( dataset_len / 100.0 ) * ratio))
+    test_dim = dataset_len - training_dim
+    print training_dim
+    print test_dim 
+    print dataset_len
+    idx_set=set()
+    while len(idx_set) < training_dim:
+        idx_set.add(random.randint(0,(dataset_len-1)))
+
+    print idx_set
+    X=[]
+    Y=[]
+    W=[]
+    Z=[]
+    for i in idx_set:
+        X.append(dataset['X'][i])
+        Y.append(dataset['Y'][i])
+        W.append(dataset['W'][i])
+        Z.append(dataset['Z'][i])
+    
+    TRAINING = {'X' : X , 'Y' : Y, 'W' : W, 'Z' : Z}
+    X=[]
+    Y=[]
+    W=[]
+    Z=[]
+    for i in range(dataset_len):
+        if not i in idx_set:
+            X.append(dataset['X'][i])
+            Y.append(dataset['Y'][i])
+            W.append(dataset['W'][i])
+            Z.append(dataset['Z'][i])
+
+    TEST = {'X' : X , 'Y' : Y, 'W' : W, 'Z' : Z}
+    return {'TRAINING': TRAINING, 'TEST' : TEST}
+
+def printTestDataset(test_set, out_file = '/tmp/test_set'):
+    l = len(test_set['X'])
+    f = open(out_file,'w')
+    for i in range(l):
+        f.write(str(test_set['X'][i]))
+        f.write(',')
+        f.write(str(test_set['Y'][i]))
+        f.write('\n')
+
+def printTestDatasetInfo(test_set, out_file = '/tmp/test_set.info'):
+    l = len(test_set['X'])
+    f = open(out_file,'w')
+    for i in range(l):
+
+        f.write(str(test_set['X'][i][0]))
+        f.write(',')
+        f.write(str(test_set['X'][i][1]))
+        f.write(',')
+        f.write(str(test_set['X'][i][2]))
+        f.write('\n')
+
+
 ################################################################################
 ################################################################################
 
@@ -992,25 +1075,45 @@ parser.add_argument("--max_tree_depth", action = "store", type = int, dest = "tr
 parser.add_argument("--seed", type = int, help = "You can specify the initial seed for reproducibility. It only works with --random_samples")
 parser.add_argument("--quiet", action = "store_true", help = "It will suppress CK output")
 parser.add_argument("--csv", action="store", dest ="csv_files_dir", help="load Model matrix sizes from csv")
-parser.add_argument("--O", action = "store", dest = "out_json_file", help = "dump the training set on file")
+parser.add_argument("--O", action = "store", dest = "out_json_file", default = '/tmp/out.json', help = "dump the training set on file")
+parser.add_argument("--ratio", action = "store", dest = "ratio", help = "define the ratio between training and test sets")
 myarg=parser.parse_args()
 
 
 pipeline_output = 'out' if myarg.quiet else 'con'
-TRAINING_SET=createTrainingSet(myarg)
-tree_depth = ( int (myarg.tree_depth)) if (myarg.tree_depth != None) else None
-d_tree=createDecisionTree(TRAINING_SET,tree_depth)
+DATASET=createTrainingSet(myarg)
+# ratio = 50
+# if myarg.ratio != None:
+#     ratio = int(myarg.ratio)
+# DATASET = splitDataset(DATASET, ratio )
 
-TEST_SET =[ [243,312,64,243*312*64], [ 2048, 128,  64,2048*128*64],[  128,  128, 2048,128*128*2048]]
-idx = chooseConf(d_tree,TEST_SET)
+# print DATASET['TRAINING']
+# print "=================================================================="
+# print DATASET['TEST']
+
+tree_depth = ( int (myarg.tree_depth)) if (myarg.tree_depth != None) else None
+d_tree=createDecisionTree(DATASET['TRAINING'],tree_depth)
+
+# for e in DATASET['TEST']['X']:
+#     print "Prediction - "
+#     print e 
+#     idx = chooseConf(d_tree,e)
+#     print idx
+
+ratio = 50 
+if myarg.ratio != None:
+    ratio = int(myarg.ratio)
+
+mean_acc = d_tree.score(DATASET['TEST']['X'], DATASET['TEST']['Y'])
+# # mean_acc = d_tree.score(DATASET['TRAINING']['X'], DATASET['TRAINING']['Y'])
+print "Mean Accurancy - " + str(mean_acc)
 # print "Prediction : [243,312,64],[ 2048, 128,  64],[  128,  128, 2048] " 
 # print idx
-
 treePlot(d_tree,'/tmp/prova.pdf')
 
-kernel_name ="xgemm"
-
 clblast_root = myarg.clblast_root if myarg.clblast_root != None else "/home/marco/CK_TOOLS/lib-clblast-tune-master-gcc-6.2.0-linux-32/src"
-genSourceCode(clblast_root, myarg.kernel_name,	d_tree,TRAINING_SET)
-dumpTrainingToFile(training_set, myarg.out_json_file)
+genSourceCode(clblast_root, myarg.kernel_name,	d_tree,DATASET['TRAINING'])
+dumpTrainingToFile(DATASET, '/tmp/test_'+str(ratio) + '_' + str(tree_depth) + '.json')
+printTestDataset(DATASET['TEST'],'/tmp/test_'+str(ratio) + '_' + str(tree_depth))
+printTestDatasetInfo(DATASET['TEST'],'/tmp/test_'+str(ratio) + '_' + str(tree_depth) + '.info')
 
