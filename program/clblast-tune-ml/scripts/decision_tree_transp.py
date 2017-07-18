@@ -40,7 +40,7 @@ import math
 pipeline_output='con' 
 program = 'clblast-tune-ml'
 cmd_key = 'xgemm-fp32'
-platform = 'odroid-xu3'
+platform = 'firefly-rk3399'
 run=5
 num_leaf = 0
 output_dir =''
@@ -357,6 +357,201 @@ def runPipeline(data_uoa, cmd_key, env, cdeps, rdeps, training_set):
        return {'return':10, 'error':'pipeline failed ('+r.get('fail_reason','')+')'}
 
 
+def runPipelineCheck(data_uoa, cmd_key, env, cdeps, rdeps, M, N, K):
+     # Detect basic platform info.
+    ii={'action':'detect',
+        'module_uoa':'platform',
+        'out':'out'}
+    r=ck.access(ii)
+    if r['return']>0: return r
+
+    # Host and target OS params.
+    hos=r['host_os_uoa']
+    hosd=r['host_os_dict']
+
+    tos=r['os_uoa']
+    tosd=r['os_dict']
+    tdid=r['device_id']
+
+    # Load  program meta and desc to check deps.
+    ii={'action':'load',
+        'module_uoa':'program',
+        'data_uoa': data_uoa}
+    rx=ck.access(ii)
+    if rx['return']>0: return rx
+    mm=rx['dict']
+
+     # Get compile-time and run-time deps.
+    cdeps=mm.get('compile_deps',{})
+    rdeps=mm.get('run_deps',{})
+
+    # # Merge rdeps with cdeps for setting up the pipeline (which uses
+    # # common deps), but tag them as "for_run_time".
+    for j in rdeps:
+        cdeps[j]=rdeps[j]
+        cdeps[j]['for_run_time']='yes'
+    
+    global pipeline_output
+    ii={'action' : 'pipeline',
+                
+        'target_os':tos,
+        'device_id':tdid,
+
+        'module_uoa' : 'program',
+        'data_uoa' : program,
+        'cmd_key' : cmd_key,
+        'prepare' : 'yes',
+        'dependencies' : cdeps,
+        'no_compiler_description' : 'yes',
+        'out' : 'con',
+        'no_state_check' : 'yes',
+        'flags' : '-O3',
+        'cpu_freq':'max',
+        'gpu_freq':'max'
+        }
+    r=ck.access(ii)
+    
+    if r['return']>0: return r
+    fail=r.get('fail','')
+    if fail=='yes': return {'return':10, 'error':'pipeline failed ('+r.get('fail_reason','')+')'}
+
+    ready=r.get('ready','')
+    if ready!='yes': return {'return':11, 'error':'pipeline not ready'}
+
+
+    state=r['state']
+    tmp_dir=state['tmp_dir']
+    xcdeps=r.get('dependencies',{})
+    # Clean pipeline.
+    if 'ready' in r: del(r['ready'])
+    if 'fail' in r: del(r['fail'])
+    if 'return' in r: del(r['return'])
+    pipeline=copy.deepcopy(r)
+
+
+    record_repo='local'
+    record_uoa='check_training_dataset' + cmd_key + '-' + platform
+    ck.out('---------------------------------------------------------------------------------------')
+    ck.out('Experiment - %s:%s' % (record_repo, record_uoa))
+    
+    size_m = []
+    size_n = []
+    size_k = []
+    
+    size_m.append(M)
+    size_n.append(N)
+    size_k.append(K)
+    
+
+    cpipeline=copy.deepcopy(pipeline)
+    ii={
+        'action':'autotune',
+        'module_uoa':'pipeline',
+        'data_uoa':'program',
+        'choices_order':[
+            [
+             '##env#CK_CLBLAST_MSIZE'
+            ],
+            [
+             '##env#CK_CLBLAST_NSIZE',
+            ],
+            [
+             '##env#CK_CLBLAST_KSIZE'
+            ],
+            [
+             '##env#CK_CLBLAST_NUM_ITERATIONS'
+            ],
+            [
+             '##env#CK_CLBLAST_KWG'
+            ],
+            [
+             '##env#CK_CLBLAST_KWI'
+            ],
+            [
+             '##env#CK_CLBLAST_MDIMA'
+            ],
+            [
+             '##env#CK_CLBLAST_MDIMC'
+            ],
+            [
+             '##env#CK_CLBLAST_MWG'
+            ],
+            [
+             '##env#CK_CLBLAST_NDIMB'
+            ],
+            [
+             '##env#CK_CLBLAST_NDIMC'
+            ],
+            [
+             '##env#CK_CLBLAST_NWG'
+            ],
+            [
+             '##env#CK_CLBLAST_SA'
+            ],
+            [
+             '##env#CK_CLBLAST_SB'
+            ],
+            [
+             '##env#CK_CLBLAST_STRM'
+            ],
+            [
+             '##env#CK_CLBLAST_STRN'
+            ],
+            [
+             '##env#CK_CLBLAST_VWM'
+            ],
+            [
+             '##env#CK_CLBLAST_VWN'
+            ]
+
+        ],
+        'choices_selection':[
+            {"type":"loop-with-next", "choice":size_m, "default":"256"},
+            {"type":"loop-with-next", "choice":size_n, "default":"256"},
+            {"type":"loop-with-next", "choice":size_k, "default":"256"},
+            {"type" : "loop", "choice":[env['run']] , 'default':[env['run']]},
+            {"type" : "loop", "choice":[env['kwg']] , 'default':[env['kwg']]},
+            {"type" : "loop", "choice":[env['kwi']] , 'default':[env['kwi']]},
+            {"type" : "loop", "choice":[env['mdima']] , 'default':[env['mdima']]},
+            {"type" : "loop", "choice":[env['mdimc']] , 'default':[env['mdimc']]},
+            {"type" : "loop", "choice":[env['mwg']] , 'default':[env['mwg']]},
+            {"type" : "loop", "choice":[env['ndimb']] , 'default':[env['ndimb']]},
+            {"type" : "loop", "choice":[env['ndimc']] , 'default':[env['ndimc']]},
+            {"type" : "loop", "choice":[env['nwg']] , 'default':[env['nwg']]},
+            {"type" : "loop", "choice":[env['sa']] , 'default':[env['sa']]},
+            {"type" : "loop", "choice":[env['sb']] , 'default':[env['sb']]},
+            {"type" : "loop", "choice":[env['strm']] , 'default':[env['strm']]},
+            {"type" : "loop", "choice":[env['strn']] , 'default':[env['strn']]},
+            {"type" : "loop", "choice":[env['vwm']] , 'default':[env['vwm']]},
+            {"type" : "loop", "choice":[env['vwn']] , 'default':[env['vwn']]}
+        ],
+        'features_keys_to_process':['##choices#*'],
+
+
+        'iterations':-1,
+        'repetitions':1,
+        'record':'yes',
+        'record_failed':'yes',
+        'record_params':{
+            'search_point_by_features':'yes'
+        },
+        'record_repo':record_repo,
+        'record_uoa':record_uoa,
+        'tags':['heck_training_dataset', cmd_key, platform],
+        'pipeline': cpipeline,
+        'out':pipeline_output
+
+    }
+    r=ck.access(ii)
+    
+    if r['return']>0: 
+        return r
+    fail=r.get('fail','')
+    if fail=='yes':
+       return {'return':10, 'error':'pipeline failed ('+r.get('fail_reason','')+')'}
+
+
+
 
 
     
@@ -513,8 +708,13 @@ def copyBests(exp_dir, out_dir):
                 copyfile(exp_dir + os.sep + f_dir , output_dir + os.sep + f_dir)
                 copyfile(exp_dir + os.sep + cl_dir , output_dir + os.sep + cl_dir)
             elif gflops_und > gflops_dir:
-                copyfile(exp_dir + os.sep + f_und , output_dir + os.sep + f_und)
-                copyfile(exp_dir + os.sep + cl_und , output_dir + os.sep + cl_und)
+                gflops_und_real = checkUndirectTotaltime(exp_dir + os.sep + f_und,gflops_dir)
+                if gflops_und_real:
+                    copyfile(exp_dir + os.sep + f_und , output_dir + os.sep + f_und)
+                    copyfile(exp_dir + os.sep + cl_und , output_dir + os.sep + cl_und)
+                else :
+                    copyfile(exp_dir + os.sep + f_dir , output_dir + os.sep + f_dir)
+                    copyfile(exp_dir + os.sep + cl_dir , output_dir + os.sep + cl_dir)
             else:
                 if gflops_dir != 0.0:
                     copyfile(exp_dir + os.sep + f_dir , output_dir + os.sep + f_dir)
@@ -522,6 +722,116 @@ def copyBests(exp_dir, out_dir):
                     copyfile(exp_dir + os.sep + cl_dir , output_dir + os.sep + cl_dir)
                     copyfile(exp_dir + os.sep + cl_und , output_dir + os.sep + cl_und)
 
+
+
+
+def checkUndirectTotaltime(input_file,gflops_compare):
+    f=open(input_file)
+    json_data = json.load(f)
+
+    #LOAD PARAMETERS
+    kwg = json_data['statistics']['best_configuration']['parameters']['KWG']
+    kwi = json_data['statistics']['best_configuration']['parameters']['KWI']
+    mdima = json_data['statistics']['best_configuration']['parameters']['MDIMA']
+    mdimc = json_data['statistics']['best_configuration']['parameters']['MDIMC']
+    ndimb = json_data['statistics']['best_configuration']['parameters']['NDIMB']
+    ndimc = json_data['statistics']['best_configuration']['parameters']['NDIMC']
+    mwg = json_data['statistics']['best_configuration']['parameters']['MWG']
+    nwg = json_data['statistics']['best_configuration']['parameters']['NWG']
+    vwm = json_data['statistics']['best_configuration']['parameters']['VWM']
+    vwn = json_data['statistics']['best_configuration']['parameters']['VWN']
+    sa = json_data['statistics']['best_configuration']['parameters']['SA']
+    sb = json_data['statistics']['best_configuration']['parameters']['SB']
+    strm = json_data['statistics']['best_configuration']['parameters']['STRM']
+    strn = json_data['statistics']['best_configuration']['parameters']['STRN']
+
+    #LOAD SIZES
+    m = json_data['arg_m']
+    n = json_data['arg_n']
+    k = json_data['arg_k']
+
+    # Detect basic platform info.
+    ii={'action':'detect',
+        'module_uoa':'platform',
+        'out':'out'}
+    r=ck.access(ii)
+    if r['return']>0: return r
+
+    # Host and target OS params.
+    hos=r['host_os_uoa']
+    hosd=r['host_os_dict']
+
+    tos=r['os_uoa']
+    tosd=r['os_dict']
+    tdid=r['device_id']
+
+    # Load  program meta and desc to check deps.
+    ii={'action':'load',
+        'module_uoa':'program',
+        'data_uoa':program}
+    rx=ck.access(ii)
+    if rx['return']>0: return rx
+    mm=rx['dict']
+
+     # Get compile-time and run-time deps.
+    cdeps=mm.get('compile_deps',{})
+    rdeps=mm.get('run_deps',{})
+
+    # # Merge rdeps with cdeps for setting up the pipeline (which uses
+    # # common deps), but tag them as "for_run_time".
+    for j in rdeps:
+        cdeps[j]=rdeps[j]
+        cdeps[j]['for_run_time']='yes'
+  
+    
+    
+    ii={'action': 'search',
+        'module_uoa': 'program',
+        'data_uoa': program
+    }
+    r = ck.access(ii)
+    if r['return'] > 0:
+        print "[ERROR] : unable to find program entry " + program
+        return r
+    env ={ 
+            'run' : run,
+            'kwg' : kwg,
+            'kwi' : kwi,
+            'mdima' : mdima,
+            'mdimc' : mdimc,
+            'mwg' : mwg,
+            'ndimb' : ndimb,
+            'ndimc' : ndimc,
+            'nwg' : nwg,
+            'sa' : sa,
+            'sb' : sb,
+            'strm' : strm,
+            'strn' : strn,
+            'vwm' : vwm,
+            'vwn' : vwn
+        }
+    cmd_key='clblast_test_dvdt_runtime_check'
+    runPipelineCheck(program, cmd_key, env, cdeps, rdeps,m,n,k)
+
+    #Check the overall GFLOPS
+    exp_dir=r['lst'][0]['path']
+    exp_dir = exp_dir + '/tmp'
+
+    check_file='clblast_xgemm_override.json'
+    f_c = open(exp_dir + os.sep + check_file)
+    json_data_check = json.load(f_c)
+
+    gflops_all = json_data_check['GFLOPS']
+    if  gflops_all > gflops_compare : 
+        json_data['GFLOPS_tune'] = json_data['statistics']['best_configuration']['GFLOPS']
+        json_data['statistics']['best_configuration']['GFLOPS'] = gflops_all
+        f.close()
+        f=open(input_file+'.1',"w")
+        json.dump(json_data, f)
+        f.close()
+        return True
+    else: 
+        return False
 
 
 ################################################################################
