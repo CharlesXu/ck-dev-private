@@ -573,6 +573,7 @@ def getKernelId(kernels_array, kernel_name):
             return i
 
 
+
 def getTrainingFromDirectory(kernels_array,output_dir):
     X=[] #features
     Y=[] #labels

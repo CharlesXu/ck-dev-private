@@ -660,9 +660,6 @@ def tuneLibrary(training,output_dir,kernels_name):
     exp_dir = exp_dir + '/tmp'
 
     copyBests(exp_dir,output_dir)
-    # for e in os.listdir(exp_dir):
-    #     if kernels_name[0] in e and 'multiconf' in e :
-    #         copyfile(exp_dir + os.sep + e , output_dir + os.sep + e)
     return 0
 
 def getGFlops(exp_dir, inp):
@@ -671,8 +668,8 @@ def getGFlops(exp_dir, inp):
         return 0.0
     f=open(exp_dir + os.sep + inp)
     jdata=json.load(f)
+    f.close()
     if 'GFLOPS' in jdata['statistics']['best_configuration']:
-        # print jdata['statistics']['best_configuration']['GFLOPS']
         return jdata['statistics']['best_configuration']['GFLOPS']
     else:
         print "Not found"
@@ -704,6 +701,8 @@ def copyBests(exp_dir, out_dir):
             gflops_und=getGFlops(exp_dir,f_und)
             cl_dir = getClFiles(exp_dir,f_dir)
             cl_und = getClFiles(exp_dir,f_und)
+            print "Undirect " + str(gflops_und) + " " + f_und
+            print "Direct " + str(gflops_dir) + " " + f_dir
             if gflops_dir > gflops_und:
                 copyfile(exp_dir + os.sep + f_dir , output_dir + os.sep + f_dir)
                 copyfile(exp_dir + os.sep + cl_dir , output_dir + os.sep + cl_dir)
@@ -827,7 +826,7 @@ def checkUndirectTotaltime(input_file,gflops_compare):
         json_data['statistics']['best_configuration']['GFLOPS'] = gflops_all
         f.close()
         f=open(input_file+'.1',"w")
-        json.dump(json_data, f)
+        json.dump(json_data, f, sort_keys=True, indent = 4)
         f.close()
         return True
     else: 
@@ -938,6 +937,7 @@ def getTrainingFromDirectory(kernels_array,output_dir):
         # print e
         # print gflops
         kernel_id = getKernelId(kernels_array, kernel)
+        conf_sign = genConfSign(parameters)
       	#print kernelId
         count +=1
         # NOTE : For now we use only m, n, k as features and gflops as labels
@@ -950,6 +950,7 @@ def getTrainingFromDirectory(kernels_array,output_dir):
         	'k' : k, 
         	'kernel': kernel,
         	'kernel_id' : kernel_id,
+            'conf_sign' : conf_sign,
         	'parameters': parameters, 
         	'time': time, 
         	'precision' : precision,
@@ -1072,7 +1073,9 @@ def createTrainingSet(arg):
 
 
     DATASET = getTrainingFromDirectory(arg.kernel_name,output_dir)
-    routines_names = generateRoutinesNames(arg.kernel_name,DATASET['Z'])
+    signSet = genConfSet(arg.kernel_name, DATASET['Z'])
+    routines_names = generateRoutinesNamesEnhanced(arg.kernel_name,DATASET['Z'], signSet)
+    # routines_names = generateRoutinesNames(arg.kernel_name,DATASET['Z'])
 
     DATASET['W'] = routines_names
     
@@ -1140,9 +1143,57 @@ def generateRoutinesNames(kernels_name, training_set):
 
     return routines_names
 
+def generateRoutinesNamesEnhanced(kernels_name, training_set, signSet):
+    routines_names = []
+    count_vett=[]
+    
+    for i in range(len(kernels_name)):
+        count_vett.append(0)
+    
+    for i in training_set:
+        #print i
+        idx = i['kernel_id']
+        #print idx
+        sign = i['conf_sign']
+        curr= kernelToFamily(kernels_name[idx]) + str(signSet[idx].index(sign))
+        #curr= kernels_name[idx].capitalize() + str(count_vett[idx])
+        count_vett[idx] +=1
+        routines_names.append({'kernel':curr, 'used': 0})
+
+    return routines_names
+
+def genConfSet(kernels_name, training_set):
+    signVet = []
+    count_vett = []
+    for i in range(len(kernels_name)):
+        s = set()
+        count_vett.append(s)
+
+    for i in training_set: 
+        idx = i['kernel_id']
+        sign = i['conf_sign']
+        count_vett[idx].add(sign)
+
+    set_dim = 0 
+    for i in range(len(kernels_name)):
+        signVet.append(list(count_vett[i]))
+        set_dim += len(count_vett[i])
+
+    print "Collapsed " + str( len(training_set) - set_dim) + " of " + str(len(training_set))
 
 
-   
+    return signVet
+
+
+
+def  genConfSign(parameters):
+    sign = ""
+    for p in parameters:
+        sign+= p + str(parameters[p])
+
+    # print sign
+    return sign
+
 
 # Generate C++ source code of the Decision Tree
 def genSourceCode(library_root_path, kernel_name, d_tree,training_set):
