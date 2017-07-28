@@ -1245,9 +1245,16 @@ def genSourceCode(library_root_path, kernel_name, d_tree,training_set):
     #Copy the file in the library path
     copyfile(inference_src_file, library_root_path + os.sep + 'src' + os.sep + inference_src_file)
     
+    # I want just one copy of each used kernel, even if it appears in more than one leafs
+    used_list = []
+    for r in training_set['W']:
+        if r['used'] == 1:
+            if r['sign'] in used_list:
+                r['used'] = 0
+            else:
+                used_list.append(r['sign'])
+
     #Update the json file to the json directory
-    global output_dir
-    global json_out_dir
     updateKernelOnJson(training_set,output_dir,json_out_dir)
     #Generate .hpp files for the new routines
     db_script_path = library_root_path + os.sep + 'scripts' + os.sep + 'database'
@@ -1269,14 +1276,7 @@ def genSourceCode(library_root_path, kernel_name, d_tree,training_set):
         print "[FATAL] : invalid installation"
         exit(1)
     
-    used_list = []
-    for r in training_set['W']:
-        if r['used'] == 1:
-            if r['sign'] in used_list:
-                r['used'] = 0
-            else:
-                used_list.append(r['sign'])
-
+    
     idx_namespace_line = db_content_row.index(namespace_line)
     for r in training_set['W']:
         if r['used'] == 1:
@@ -1455,6 +1455,10 @@ parser.add_argument("--quiet", action = "store_true", help = "It will suppress C
 parser.add_argument("--csv", action="store", dest ="csv_files_dir", help="load Model matrix sizes from csv")
 parser.add_argument("--O", action = "store", dest = "out_json_file", default = '/tmp/out.json', help = "dump the training set on file")
 parser.add_argument("--ratio", action = "store", dest = "ratio", help = "define the ratio between training and test sets")
+parser.add_argument("--tree_criterion", action = "store", default = "gini", help = "{gini,entropy}")
+parser.add_argument("--tree_splitter", action = "store", default = "best", help ="{best,random}")
+parser.add_argument("--tree_min_samples_leaf", action = "store", default = 1)
+parser.add_argument("--tree_presort", action = "store", default="false")
 myarg=parser.parse_args()
 
 
