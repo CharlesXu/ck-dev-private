@@ -29,6 +29,7 @@ import math
 
 
 
+
 ################################################################################
 ################################################################################
 
@@ -56,76 +57,55 @@ header = """
 
 namespace clblast{
 
+struct dvdtKernelInfo{
+        std::vector<std::string> routines_vett;
+        std::string k_name;
+    };
+    
 template <typename T> 
-        const std::vector<std::string> GetConf(const Layout layout, const Transpose a_transpose,const Transpose b_transpose,
+        struct dvdtKernelInfo GetConf(const Layout layout, const Transpose a_transpose,const Transpose b_transpose,
         const size_t m, const size_t n, const size_t k,
         const T alpha, const size_t a_offset, const size_t a_ld,
         const size_t b_offset, const size_t b_ld,
         const T beta, const size_t c_offset, const size_t c_ld, int *flag){
+        struct dvdtKernelInfo k_info;
 
         std::vector<std::string> routines_vett = {"Copy","Pad","Transpose","Padtranspose","KernelSelection"};
-
+        std::string k_name = "";
 
         """
 
 
 close_fun = """
-return routines_vett;
+
+k_info.routines_vett = routines_vett;
+k_info.k_name = k_name;
+return k_info;
 }
 """
-
-acc_fun = """
-const std::vector<std::string> updateRoutinesVett(std::string s, int * flag)
-{ 
-  std::vector<std::string> routines_vett = {"Copy","Pad","Transpose",
-  "Padtranspose","KernelSelection"};
-    
-    fprintf(stderr,"%s",s.c_str());
-    routines_vett.push_back(s);
-    if( s.compare("Xgemmdirect") <= 0)
-    {
-        *flag = 0;
-    }
-    else
-    {
-        *flag = 1;
-    }
-
-    return routines_vett;
-}
-
-"""
-
-aux_fun_header = """
-const std::vector<std::string> getRoutinesSet()
-{
-
-
-"""
-
 
 
 footer = """ 
 
-template const std::vector<std::string> GetConf<float>(const Layout layout, const Transpose a_transpose,
+template struct dvdtKernelInfo GetConf<float>(const Layout layout, const Transpose a_transpose,
                 const Transpose b_transpose, const size_t m, const size_t n, const size_t k,
                 const float alpha, const size_t a_offset, const size_t a_ld,
                 const size_t b_offset, const size_t b_ld,
                 const float beta, const size_t c_offset, const size_t c_ld, int *flag);
 
-template const std::vector<std::string> GetConf<double>(const Layout layout, const Transpose a_transpose,
+template struct dvdtKernelInfo GetConf<double>(const Layout layout, const Transpose a_transpose,
                 const Transpose b_transpose, const size_t m, const size_t n, const size_t k,
                 const double alpha, const size_t a_offset, const size_t a_ld,
                 const size_t b_offset, const size_t b_ld,
                 const double beta, const size_t c_offset, const size_t c_ld, int *flag);
 
-template const std::vector<std::string> GetConf<float2>(const Layout layout, const Transpose a_transpose,
+template struct dvdtKernelInfo GetConf<float2>(const Layout layout, const Transpose a_transpose,
                 const Transpose b_transpose, const size_t m, const size_t n, const size_t k,
                 const float2 alpha, const size_t a_offset, const size_t a_ld,
                 const size_t b_offset, const size_t b_ld,
                 const float2 beta, const size_t c_offset, const size_t c_ld, int *flag);
 
-template const std::vector<std::string> GetConf<double2>(const Layout layout, const Transpose a_transpose,
+template struct dvdtKernelInfo GetConf<double2>(const Layout layout, const Transpose a_transpose,
                 const Transpose b_transpose, const size_t m, const size_t n, const size_t k,
                 const double2 alpha, const size_t a_offset, const size_t a_ld,
                 const size_t b_offset, const size_t b_ld,
@@ -151,6 +131,15 @@ def generateInputDataset(num_samples=6):
             for y in range(num_samples):
                 curr={'m': 2**(i+6), 'n': 2**(j+6) ,'k' : 2**(y+6)}
                 X.append(curr)
+
+    return X
+
+def generateInputDatasetK1(num_samples=6):
+    X=[]
+    for i in range(num_samples):
+        for j in range(num_samples):
+            curr={'m': 2**(i+6), 'n': 2**(j+6) ,'k' : 1}
+            X.append(curr)
 
     return X
 
@@ -975,7 +964,7 @@ def getTrainingFromDirectory(kernels_array,output_dir):
 
 def dumpTrainingToFile(training_set, output_file_path='/tmp/out.json'):
     out_file = open(output_file_path,'w')
-    json.dump(training_set,out_file)
+    json.dump(training_set,out_file, sort_keys = True,indent = 4)
     out_file.close()
 
 def treePlot(d_tree, output_file_path):
@@ -990,17 +979,18 @@ def treePlot(d_tree, output_file_path):
 
 def updateKernelOnJson(training_set, exp_dir, out_dir):
     for i in range(len(training_set['Z'])):
-        e = training_set['Z'][i]
-        f_in = open(exp_dir + os.sep + e['file_path'])
-        json_data = json.load(f_in)
+        if training_set['W'][i]['used'] == 1 :
+            e = training_set['Z'][i]
+            f_in = open(exp_dir + os.sep + e['file_path'])
+            json_data = json.load(f_in)
 
-        
-        json_data['kernel_family'] = training_set['W'][i]['kernel']
+            
+            json_data['kernel_family'] = training_set['W'][i]['kernel']
 
-        f_out = open(out_dir + os.sep + e['file_path'],'w')
-        json.dump(json_data,f_out)
-        f_in.close()
-        f_out.close()
+            f_out = open(out_dir + os.sep + e['file_path'],'w')
+            json.dump(json_data,f_out, sort_keys = True, indent = 4)
+            f_in.close()
+            f_out.close()
 
 def getRandomMatrixFromSet(dataset, num_samples, seed=None):
     X=[]
@@ -1079,14 +1069,14 @@ def createTrainingSet(arg):
 
     DATASET['W'] = routines_names
     
-
+    print DATASET['W']
     ratio = 50
     if myarg.ratio != None:
         ratio = int(myarg.ratio)
     
     DATASET = splitDataset(DATASET, ratio)
 
-    updateKernelOnJson(DATASET['TRAINING'],output_dir,json_out_dir)
+    # updateKernelOnJson(DATASET['TRAINING'],output_dir,json_out_dir)
     # print "X"
     # print TRAINING_SET['X']
     # print "Y"
@@ -1158,7 +1148,7 @@ def generateRoutinesNamesEnhanced(kernels_name, training_set, signSet):
         curr= kernelToFamily(kernels_name[idx]) + str(signSet[idx].index(sign))
         #curr= kernels_name[idx].capitalize() + str(count_vett[idx])
         count_vett[idx] +=1
-        routines_names.append({'kernel':curr, 'used': 0})
+        routines_names.append({'kernel':curr, 'used': 0, 'sign' : sign})
 
     return routines_names
 
@@ -1225,28 +1215,28 @@ def genSourceCode(library_root_path, kernel_name, d_tree,training_set):
     #Write close_fun
     tmp_file.write(close_fun)
 
-    #Write Accurancy function
-    tmp_file.write(acc_fun)
+    # #Write Accurancy function
+    # tmp_file.write(acc_fun)
 
-    #Write aux_fun_header
-    tmp_file.write(aux_fun_header)
+    # #Write aux_fun_header
+    # tmp_file.write(aux_fun_header)
 
-    value = """ std::vector<std::string> routines_vett = { """
-    comma=0
-    for r in training_set['W']:
-        if comma == 1:
-            value += ','
-            comma = 0
-        if r['used'] == 1:
-            value += "\"" + r['kernel'] + "\""
-            comma=1
+    # value = """ std::vector<std::string> routines_vett = { """
+    # comma=0
+    # for r in training_set['W']:
+    #     if comma == 1:
+    #         value += ','
+    #         comma = 0
+    #     if r['used'] == 1:
+    #         value += "\"" + r['kernel'] + "\""
+    #         comma=1
     
-    value+='};'
+    # value+='};'
     
-    tmp_file.write(value)
+    # tmp_file.write(value)
 
-    #Write close_fun
-    tmp_file.write(close_fun)
+    # #Write close_fun
+    # tmp_file.write(close_fun)
 
     #Write class footer stuff
     tmp_file.write(footer) 
@@ -1255,6 +1245,10 @@ def genSourceCode(library_root_path, kernel_name, d_tree,training_set):
     #Copy the file in the library path
     copyfile(inference_src_file, library_root_path + os.sep + 'src' + os.sep + inference_src_file)
     
+    #Update the json file to the json directory
+    global output_dir
+    global json_out_dir
+    updateKernelOnJson(training_set,output_dir,json_out_dir)
     #Generate .hpp files for the new routines
     db_script_path = library_root_path + os.sep + 'scripts' + os.sep + 'database'
     db_script = 'python ' + db_script_path + os.sep + 'database.py -v ' + json_out_dir + ' ' + library_root_path
@@ -1274,6 +1268,14 @@ def genSourceCode(library_root_path, kernel_name, d_tree,training_set):
     if db_content_row.count(namespace_line) != 1 or db_content_row.count(db_init_line) != 1:
         print "[FATAL] : invalid installation"
         exit(1)
+    
+    used_list = []
+    for r in training_set['W']:
+        if r['used'] == 1:
+            if r['sign'] in used_list:
+                r['used'] = 0
+            else:
+                used_list.append(r['sign'])
 
     idx_namespace_line = db_content_row.index(namespace_line)
     for r in training_set['W']:
@@ -1343,6 +1345,9 @@ def tree_to_code(tree, feature_names, training_set, out_file, routines_name):
             value = ("\n routines_vett.push_back(\"" + routines_name[getIdx(tree_.value[node][0])]['kernel'] + "\");\n")
             # print value
             out_file.write(value)
+            value = ("k_name = \"" + routines_name[getIdx(tree_.value[node][0])]['kernel'] + "\";")
+            out_file.write(value)
+            
             if 'direct' in routines_name[getIdx(tree_.value[node][0])]['kernel']:
                 value = ("\n *flag=1;\n")
             else:
@@ -1490,3 +1495,11 @@ dumpTrainingToFile(DATASET, '/tmp/test_'+str(ratio) + '_' + str(tree_depth) + '.
 printTestDataset(DATASET['TEST'],'/tmp/test_'+str(ratio) + '_' + str(tree_depth))
 printTestDatasetInfo(DATASET['TEST'],'/tmp/test_'+str(ratio) + '_' + str(tree_depth) + '.info')
 
+print "*************** Statistics ***************"
+print "Dataset size : " + str( len(DATASET['TRAINING']['X']) + len(DATASET['TEST']['X']))
+print "Training dataset ratio : " + str(myarg.ratio)
+print "Decision tree  # leaves : " + str(num_leaf)
+signSet = genConfSet(myarg.kernel_name, DATASET['TRAINING']['Z'])
+
+for i in range(len(myarg.kernel_name)):    
+    print "Unique configurations for [" + myarg.kernel_name[i] + "] : " + str(len(signSet[i])) 
