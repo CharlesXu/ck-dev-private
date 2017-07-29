@@ -40,6 +40,7 @@ import math
 
 pipeline_output='con' 
 program = 'clblast-tune-ml'
+program_check = 'clblast-check-ml'
 cmd_key = 'xgemm-fp32'
 platform = 'firefly-rk3399'
 run=5
@@ -387,7 +388,7 @@ def runPipelineCheck(data_uoa, cmd_key, env, cdeps, rdeps, M, N, K):
         'device_id':tdid,
 
         'module_uoa' : 'program',
-        'data_uoa' : program,
+        'data_uoa' : program_check,
         'cmd_key' : cmd_key,
         'prepare' : 'yes',
         'dependencies' : cdeps,
@@ -419,7 +420,7 @@ def runPipelineCheck(data_uoa, cmd_key, env, cdeps, rdeps, M, N, K):
 
 
     record_repo='local'
-    record_uoa='check_training_dataset' + cmd_key + '-' + platform
+    record_uoa='check_training_dataset-' + cmd_key + '-' + platform
     ck.out('---------------------------------------------------------------------------------------')
     ck.out('Experiment - %s:%s' % (record_repo, record_uoa))
     
