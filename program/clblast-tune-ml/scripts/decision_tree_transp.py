@@ -527,7 +527,7 @@ def runPipelineCheck(data_uoa, cmd_key, env, cdeps, rdeps, M, N, K):
         },
         'record_repo':record_repo,
         'record_uoa':record_uoa,
-        'tags':['heck_training_dataset', cmd_key, platform],
+        'tags':['check_training_dataset', cmd_key, platform],
         'pipeline': cpipeline,
         'out':pipeline_output
 
@@ -757,7 +757,7 @@ def checkUndirectTotaltime(input_file,gflops_compare):
     # Load  program meta and desc to check deps.
     ii={'action':'load',
         'module_uoa':'program',
-        'data_uoa':program}
+        'data_uoa':program_check}
     rx=ck.access(ii)
     if rx['return']>0: return rx
     mm=rx['dict']
@@ -776,11 +776,11 @@ def checkUndirectTotaltime(input_file,gflops_compare):
     
     ii={'action': 'search',
         'module_uoa': 'program',
-        'data_uoa': program
+        'data_uoa': program_check
     }
     r = ck.access(ii)
     if r['return'] > 0:
-        print "[ERROR] : unable to find program entry " + program
+        print "[ERROR] : unable to find program entry " + program_check
         return r
     env ={ 
             'run' : run,
@@ -800,7 +800,7 @@ def checkUndirectTotaltime(input_file,gflops_compare):
             'vwn' : vwn
         }
     cmd_key='clblast_test_dvdt_runtime_check'
-    runPipelineCheck(program, cmd_key, env, cdeps, rdeps,m,n,k)
+    runPipelineCheck(program_check, cmd_key, env, cdeps, rdeps,m,n,k)
 
     #Check the overall GFLOPS
     exp_dir=r['lst'][0]['path']
@@ -1493,13 +1493,18 @@ mean_acc = d_tree.score(DATASET['TEST']['X'], DATASET['TEST']['Y'])
 print "Mean Accurancy - " + str(mean_acc)
 # print "Prediction : [243,312,64],[ 2048, 128,  64],[  128,  128, 2048] " 
 # print idx
-treePlot(d_tree,'/tmp/prova.pdf')
+
+out_dir = '/tmp'
+if myarg.output_dir != None :
+    out_dir = myarg.output_dir
+
+treePlot(d_tree, out_dir + os.sep + 'prova.pdf')
 
 clblast_root = myarg.clblast_root if myarg.clblast_root != None else "/home/marco/CK_TOOLS/lib-clblast-tune-master-gcc-6.2.0-linux-32/src"
 genSourceCode(clblast_root, myarg.kernel_name,	d_tree,DATASET['TRAINING'])
-dumpTrainingToFile(DATASET, '/tmp/test_'+str(ratio) + '_' + str(tree_depth) + '.json')
-printTestDataset(DATASET['TEST'],'/tmp/test_'+str(ratio) + '_' + str(tree_depth))
-printTestDatasetInfo(DATASET['TEST'],'/tmp/test_'+str(ratio) + '_' + str(tree_depth) + '.info')
+dumpTrainingToFile(DATASET, out_dir + os.sep + 'test_'+str(ratio) + '_' + str(tree_depth) + '.json')
+printTestDataset(DATASET['TEST'], out_dir + os.sep + 'test_'+str(ratio) + '_' + str(tree_depth))
+printTestDatasetInfo(DATASET['TEST'],out_dir + os.sep +  'test_'+str(ratio) + '_' + str(tree_depth) + '.info')
 
 print "*************** Statistics ***************"
 print "Dataset size : " + str( len(DATASET['TRAINING']['X']) + len(DATASET['TEST']['X']))
