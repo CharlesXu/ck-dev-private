@@ -815,7 +815,8 @@ def checkUndirectTotaltime(input_file,gflops_compare):
         json_data['GFLOPS_tune'] = json_data['statistics']['best_configuration']['GFLOPS']
         json_data['statistics']['best_configuration']['GFLOPS'] = gflops_all
         f.close()
-        f=open(input_file+'.1',"w")
+        f=open(input_file,"w")
+        #f=open(input_file+'.1',"w")
         json.dump(json_data, f, sort_keys=True, indent = 4)
         f.close()
         return True
