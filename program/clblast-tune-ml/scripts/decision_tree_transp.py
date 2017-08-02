@@ -206,7 +206,7 @@ def runPipeline(data_uoa, cmd_key, env, cdeps, rdeps, training_set):
         'device_id':tdid,
 
         'module_uoa' : 'program',
-        'data_uoa' : program,
+        'data_uoa' : data_uoa,
         'cmd_key' : cmd_key,
         'prepare' : 'yes',
         'dependencies' : cdeps,
@@ -388,7 +388,7 @@ def runPipelineCheck(data_uoa, cmd_key, env, cdeps, rdeps, M, N, K):
         'device_id':tdid,
 
         'module_uoa' : 'program',
-        'data_uoa' : program_check,
+        'data_uoa' : data_uoa,
         'cmd_key' : cmd_key,
         'prepare' : 'yes',
         'dependencies' : cdeps,
@@ -520,14 +520,14 @@ def runPipelineCheck(data_uoa, cmd_key, env, cdeps, rdeps, M, N, K):
 
         'iterations':-1,
         'repetitions':1,
-        'record':'yes',
-        'record_failed':'yes',
-        'record_params':{
-            'search_point_by_features':'yes'
-        },
-        'record_repo':record_repo,
-        'record_uoa':record_uoa,
-        'tags':['check_training_dataset', cmd_key, platform],
+        'record':'no',
+        # 'record_failed':'yes',
+        # 'record_params':{
+        #     'search_point_by_features':'yes'
+        # },
+        # 'record_repo':record_repo,
+        # 'record_uoa':record_uoa,
+        # 'tags':['check_training_dataset', cmd_key, platform],
         'pipeline': cpipeline,
         'out':pipeline_output
 
@@ -1018,6 +1018,24 @@ def createTrainingSet(arg):
     
     DATASET=[]
     
+    global output_dir
+    global json_out_dir
+    output_dir = '/tmp/exp'
+    if arg.output_dir != None:
+        output_dir = arg.output_dir
+
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    else:
+        print "[INFO] : " + output_dir + " exists"
+   
+    json_out_dir = output_dir + '/json'
+    if not os.path.exists(json_out_dir):
+        os.makedirs(json_out_dir)
+    else:
+        print "[INFO] : " + json_out_dir + " exists"
+
+
     if arg.training_url != None :
         DATASET = getTrainingFromUrl(arg.training_url)
         return DATASET
@@ -1040,22 +1058,7 @@ def createTrainingSet(arg):
     # print X
 
     print "[INFO] : Training dataset len : " + str(len(X))
-    global output_dir
-    global json_out_dir
-    output_dir = '/tmp/exp'
-    if arg.output_dir != None:
-        output_dir = arg.output_dir
-
-    if not os.path.exists(output_dir):
-    	os.makedirs(output_dir)
-    else:
-    	print "[INFO] : " + output_dir + " exists"
-   
-    json_out_dir = output_dir + '/json'
-    if not os.path.exists(json_out_dir):
-    	os.makedirs(json_out_dir)
-    else:
-    	print "[INFO] : " + json_out_dir + " exists"
+    
     
 
     r = tuneLibrary(X,output_dir,arg.kernel_name)
