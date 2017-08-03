@@ -1456,6 +1456,7 @@ print "*************** Statistics ***************"
 print "Dataset size : " + str( len(DATASET['TRAINING']['X']) + len(DATASET['TEST']['X']))
 print "Training dataset ratio : " + str(myarg.ratio)
 print "Decision tree  # leaves : " + str(num_leaf)
+print "Decision heigth : " + str(tree_height)
 signSet = genConfSet(myarg.kernel_name, DATASET['TRAINING']['Z'])
 
 for i in range(len(myarg.kernel_name)):    
