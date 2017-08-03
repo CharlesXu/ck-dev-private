@@ -925,16 +925,16 @@ def getTrainingFromDirectory(kernels_array,output_dir):
             parameters = None
             time = sys.float_info.max
 
-        # print e
-        # print gflops
+        
         kernel_id = getKernelId(kernels_array, kernel)
         conf_sign = genConfSign(parameters)
-      	#print kernelId
+      	
         count +=1
         # NOTE : For now we use only m, n, k as features and gflops as labels
-        X.append([ m,n,k,m*n*k ])
+        X.append([ m,n,k])
         #X.append({'m': m, 'n' : n , 'k' : k})
-        Y.append(str(math.ceil(gflops)))
+        Y.append(conf_sign)
+        #Y.append(str(math.ceil(gflops)))
         Z.append({
         	'm': m, 
         	'n' : n , 
@@ -1048,29 +1048,30 @@ def createTrainingSet(arg):
         M = loadModelMatrixes(arg.csv_files_dir)
         #X = getRandomMatrixFromSet(M,5)
         X = getAllMatrixFromSet(M)
+        # Override default parameter
+        arg.build_dataset = True 
     elif arg.random_num != None:
         X = getRandomMatrix(arg.random_num,arg.seed)
+        # Override default parameter
+        arg.build_dataset = True 
     else:
         # X = generateInputDataset()
         X = updateInputDataset(1024,4096,256)
 
 
-    # print X
-
     print "[INFO] : Training dataset len : " + str(len(X))
     
     
-
-    r = tuneLibrary(X,output_dir,arg.kernel_name)
-    if r > 0:
-        print "[FATAL] : exit"
-        exit(1)
+    if arg.build_dataset :
+        r = tuneLibrary(X,output_dir,arg.kernel_name)
+        if r > 0:
+            print "[FATAL] : exit"
+            exit(1)
 
 
     DATASET = getTrainingFromDirectory(arg.kernel_name,output_dir)
     signSet = genConfSet(arg.kernel_name, DATASET['Z'])
     routines_names = generateRoutinesNamesEnhanced(arg.kernel_name,DATASET['Z'], signSet)
-    # routines_names = generateRoutinesNames(arg.kernel_name,DATASET['Z'])
 
     DATASET['W'] = routines_names
     
@@ -1080,17 +1081,6 @@ def createTrainingSet(arg):
         ratio = int(myarg.ratio)
     
     DATASET = splitDataset(DATASET, ratio)
-
-    # updateKernelOnJson(DATASET['TRAINING'],output_dir,json_out_dir)
-    # print "X"
-    # print TRAINING_SET['X']
-    # print "Y"
-    # print TRAINING_SET['Y']
-    # print "W"
-    # print TRAINING_SET['W']
-    # print "Z"
-    # print TRAINING_SET['Z']
-    
     return DATASET
 
 
@@ -1128,11 +1118,8 @@ def generateRoutinesNames(kernels_name, training_set):
         count_vett.append(0)
     
     for i in training_set:
-    	#print i
         idx = i['kernel_id']
-        #print idx
         curr= kernelToFamily(kernels_name[idx]) + str(count_vett[idx])
-        #curr= kernels_name[idx].capitalize() + str(count_vett[idx])
         count_vett[idx] +=1
         routines_names.append({'kernel':curr, 'used': 0})
 
@@ -1146,12 +1133,9 @@ def generateRoutinesNamesEnhanced(kernels_name, training_set, signSet):
         count_vett.append(0)
     
     for i in training_set:
-        #print i
         idx = i['kernel_id']
-        #print idx
         sign = i['conf_sign']
         curr= kernelToFamily(kernels_name[idx]) + str(signSet[idx].index(sign))
-        #curr= kernels_name[idx].capitalize() + str(count_vett[idx])
         count_vett[idx] +=1
         routines_names.append({'kernel':curr, 'used': 0, 'sign' : sign})
 
@@ -1186,7 +1170,6 @@ def  genConfSign(parameters):
     for p in parameters:
         sign+= p + str(parameters[p])
 
-    # print sign
     return sign
 
 
@@ -1219,29 +1202,6 @@ def genSourceCode(library_root_path, kernel_name, d_tree,training_set):
 
     #Write close_fun
     tmp_file.write(close_fun)
-
-    # #Write Accurancy function
-    # tmp_file.write(acc_fun)
-
-    # #Write aux_fun_header
-    # tmp_file.write(aux_fun_header)
-
-    # value = """ std::vector<std::string> routines_vett = { """
-    # comma=0
-    # for r in training_set['W']:
-    #     if comma == 1:
-    #         value += ','
-    #         comma = 0
-    #     if r['used'] == 1:
-    #         value += "\"" + r['kernel'] + "\""
-    #         comma=1
-    
-    # value+='};'
-    
-    # tmp_file.write(value)
-
-    # #Write close_fun
-    # tmp_file.write(close_fun)
 
     #Write class footer stuff
     tmp_file.write(footer) 
@@ -1292,12 +1252,7 @@ def genSourceCode(library_root_path, kernel_name, d_tree,training_set):
     idx_db_init_line = db_content_row.index(db_init_line) + 1
     for r in training_set['W']:
         if r['used'] == 1:
-            # half = "database::"+ r['kernel'] +'Half, '
             single = "database::"+ r['kernel'] +'Single, '
-            # double = "database::"+ r['kernel'] +'Double, '
-            # cpx_single = "database::"+ r['kernel'] +'ComplexSingle, '
-            # cpx_double = "database::"+ r['kernel'] +'ComplexDouble,'
-            # line = half + single + double + cpx_single + cpx_double
             line = single
             db_content_row.insert(idx_db_init_line,line)
     
@@ -1389,7 +1344,7 @@ def splitDataset(dataset, ratio):
     while len(idx_set) < training_dim:
         idx_set.add(random.randint(0,(dataset_len-1)))
 
-    print idx_set
+    # print idx_set
     X=[]
     Y=[]
     W=[]
@@ -1464,38 +1419,23 @@ parser.add_argument("--tree_criterion", action = "store", default = "gini", help
 parser.add_argument("--tree_splitter", action = "store", default = "best", help ="{best,random}")
 parser.add_argument("--tree_min_samples_leaf", action = "store", default = 1)
 parser.add_argument("--tree_presort", action = "store", default="false")
+parser.add_argument("--build_dataset", action = "store", default="false")
+
 myarg=parser.parse_args()
 
 
 pipeline_output = 'out' if myarg.quiet else 'con'
 DATASET=createTrainingSet(myarg)
-# ratio = 50
-# if myarg.ratio != None:
-#     ratio = int(myarg.ratio)
-# DATASET = splitDataset(DATASET, ratio )
-
-# print DATASET['TRAINING']
-# print "=================================================================="
-# print DATASET['TEST']
 
 tree_depth = ( int (myarg.tree_depth)) if (myarg.tree_depth != None) else None
 d_tree=createDecisionTree(DATASET['TRAINING'],tree_depth)
-
-# for e in DATASET['TEST']['X']:
-#     print "Prediction - "
-#     print e 
-#     idx = chooseConf(d_tree,e)
-#     print idx
 
 ratio = 50 
 if myarg.ratio != None:
     ratio = int(myarg.ratio)
 
 mean_acc = d_tree.score(DATASET['TEST']['X'], DATASET['TEST']['Y'])
-# # mean_acc = d_tree.score(DATASET['TRAINING']['X'], DATASET['TRAINING']['Y'])
 print "Mean Accurancy - " + str(mean_acc)
-# print "Prediction : [243,312,64],[ 2048, 128,  64],[  128,  128, 2048] " 
-# print idx
 
 out_dir = '/tmp'
 if myarg.output_dir != None :
@@ -1517,3 +1457,65 @@ signSet = genConfSet(myarg.kernel_name, DATASET['TRAINING']['Z'])
 
 for i in range(len(myarg.kernel_name)):    
     print "Unique configurations for [" + myarg.kernel_name[i] + "] : " + str(len(signSet[i])) 
+
+
+print "*************** Building the library ***************"
+
+#buildLibrary()
+
+
+print "*************** Calculate the Accurancy ***************"
+print "Mean Accurancy - " + str(mean_acc)
+
+
+
+def buildLibrary(tags = 'clblast'):
+
+    # Search for the selected version of the library
+    ii={
+        'action' : 'search',
+        'module_uoa' : 'env',
+        'tags' : tags
+    }
+
+    r = ck.access(ii)
+    if r['return'] > 0: 
+        print "[ERROR] : Unable to find the library with tags : " + str(tags)
+        return r
+
+    # Retrieve package info
+    data_uoa = r['data_uoa']
+    ii={
+        'action' : 'info',
+        'module_uoa' : 'env',
+        'data_uoa' : data_uoa
+    }
+    r = ck.access(ii)
+    if r['return'] > 0: 
+        print "[ERROR] : Unable to get info for data_uoa : " + data_uoa
+        return r
+
+    library_path = r['dict']['customize']['path_lib']
+    suffix = 'install/lib'
+    library_path = library_path[:-len(suffix)]
+
+    # Rebuild the package 
+    ii={'action':'install',
+       'module_uoa':'package',
+       'data_uoa':'lib-clblast-master-universal-tune-multiconf',
+       'extra_version' : tags,
+       'extra_version' : tags,
+       'rebuild':'yes',
+       'out':'con',
+       'quiet':'yes'
+    }
+    r = ck.access(ii)
+    if r['return'] > 0: 
+        print "[ERROR] : Unable to rebuild the library"
+    
+
+    return r
+    
+
+# TODO mettere calcolo dataset esplicito
+
