@@ -1315,7 +1315,7 @@ def tree_to_code(tree, feature_names, training_set, out_file, routines_name):
 
             routines_name[getIdx(tree_.value[node][0])]['used'] = 1
             out_file.write(value)
-            out_file.write("printf(\"" +  routines_name[getIdx(tree_.value[node][0])]['kernel'] +"\");\n");
+            out_file.write("#ifdef DVDT_DEBUG\n printf(\"" +  routines_name[getIdx(tree_.value[node][0])]['kernel'] +"\");\n#endif");
 
             global num_leaf
             num_leaf += 1
