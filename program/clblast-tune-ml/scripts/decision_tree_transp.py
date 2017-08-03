@@ -1062,7 +1062,7 @@ def createTrainingSet(arg):
     print "[INFO] : Training dataset len : " + str(len(X))
     
     
-    if arg.build_dataset :
+    if arg.build_dataset == True:
         r = tuneLibrary(X,output_dir,arg.kernel_name)
         if r > 0:
             print "[FATAL] : exit"
@@ -1272,7 +1272,7 @@ def getIdx(array_value):
 
 
 from sklearn.tree import _tree
-
+tree_height = 0
 
 def tree_to_code(tree, feature_names, training_set, out_file, routines_name):
     tree_ = tree.tree_
@@ -1298,6 +1298,9 @@ def tree_to_code(tree, feature_names, training_set, out_file, routines_name):
             recurse(tree_.children_right[node], depth + 1, selected_routines,out_file)
             out_file.write("}\n")
         else:
+            global tree_height
+            if depth > tree_height:
+                tree_height = depth
             # print tree_.value[node][0]
             # print getIdx(tree_.value[node][0])
             selected_routines.append(routines_name[getIdx(tree_.value[node][0])]['kernel'])
@@ -1315,7 +1318,7 @@ def tree_to_code(tree, feature_names, training_set, out_file, routines_name):
 
             routines_name[getIdx(tree_.value[node][0])]['used'] = 1
             out_file.write(value)
-            out_file.write("#ifdef DVDT_DEBUG\n printf(\"" +  routines_name[getIdx(tree_.value[node][0])]['kernel'] +"\");\n#endif");
+            out_file.write("#ifdef DVDT_DEBUG\n printf(\"" +  routines_name[getIdx(tree_.value[node][0])]['kernel'] +"\");\n#endif\n");
 
             global num_leaf
             num_leaf += 1
