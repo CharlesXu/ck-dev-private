@@ -1418,7 +1418,7 @@ parser.add_argument("--ratio", action = "store", dest = "ratio", help = "define 
 parser.add_argument("--tree_criterion", action = "store", default = "gini", help = "{gini,entropy}")
 parser.add_argument("--tree_splitter", action = "store", default = "best", help ="{best,random}")
 parser.add_argument("--tree_min_samples_leaf", action = "store", default = 1)
-parser.add_argument("--tree_presort", action = "store", default="false")
+parser.add_argument("--tree_presort", action = "store", default="true")
 parser.add_argument("--build_dataset", action = "store", default="false")
 
 myarg=parser.parse_args()
