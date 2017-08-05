@@ -840,6 +840,10 @@ def loadModelMatrixes(csv_files_dir):
         f.close()
     return m
 
+def loadModelMatrixesFromJson(json_file):
+    f=open(json_file)
+    j=json.load(f)
+    return j
 
 def getFeatureNames():
     feature_names = ['m', 'n', 'k', 'm * n * k', 'kernel_name']
@@ -1054,6 +1058,9 @@ def createTrainingSet(arg):
         X = getRandomMatrix(arg.random_num,arg.seed)
         # Override default parameter
         arg.build_dataset = True 
+    elif arg.json != None:
+        X = loadModelMatrixesFromJson(arg.json)
+        arg.build_dataset = True
     else:
         # X = generateInputDataset()
         X = updateInputDataset(1024,4096,256)
@@ -1068,7 +1075,9 @@ def createTrainingSet(arg):
             print "[FATAL] : exit"
             exit(1)
 
-
+    else:
+        if arg.dataset_dir != None:
+            copyDataset(arg.dataset_dir, output_dir)
     DATASET = getTrainingFromDirectory(arg.kernel_name,output_dir)
     signSet = genConfSet(arg.kernel_name, DATASET['Z'])
     routines_names = generateRoutinesNamesEnhanced(arg.kernel_name,DATASET['Z'], signSet)
@@ -1094,8 +1103,8 @@ def createTrainingSet(arg):
 
 # BUILD A DECISION TREE
 # (Using the training dataset)
-def createDecisionTree(training_set,depth=None):
-    clf = tree.DecisionTreeClassifier(max_depth=depth)
+def createDecisionTree(training_set,depth=None, tree_min_samples_leaf=1):
+    clf = tree.DecisionTreeClassifier(max_depth = depth, min_samples_leaf = tree_min_samples_leaf)
     clf = clf.fit(training_set['X'],training_set['Y'])
     return clf
 
@@ -1395,6 +1404,10 @@ def printTestDatasetInfo(test_set, out_file = '/tmp/test_set.info'):
         f.write('\n')
 
 
+
+def copyDataset(src, dst):
+    from distutils.dir_util import copy_tree
+    copy_tree(src,dst)
 ################################################################################
 ################################################################################
 
@@ -1423,15 +1436,15 @@ parser.add_argument("--tree_splitter", action = "store", default = "best", help 
 parser.add_argument("--tree_min_samples_leaf", action = "store", default = 1)
 parser.add_argument("--tree_presort", action = "store", default="true")
 parser.add_argument("--build_dataset", action = "store", default="false")
-
+parser.add_argument("--dataset_dir", action ="store", help = "the directory containing the dataset")
+parser.add_argument("--json", action = "store")
 myarg=parser.parse_args()
 
 
 pipeline_output = 'out' if myarg.quiet else 'con'
 DATASET=createTrainingSet(myarg)
 
-tree_depth = ( int (myarg.tree_depth)) if (myarg.tree_depth != None) else None
-d_tree=createDecisionTree(DATASET['TRAINING'],tree_depth)
+d_tree=createDecisionTree(DATASET['TRAINING'],myarg.tree_depth, myarg.tree_min_samples_leaf)
 
 ratio = 50 
 if myarg.ratio != None:
