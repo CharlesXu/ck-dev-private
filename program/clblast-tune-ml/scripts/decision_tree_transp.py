@@ -1450,8 +1450,10 @@ ratio = 50
 if myarg.ratio != None:
     ratio = int(myarg.ratio)
 
-mean_acc = d_tree.score(DATASET['TEST']['X'], DATASET['TEST']['Y'])
-print "Mean Accurancy - " + str(mean_acc)
+mean_acc=1
+if int(myarg.ratio) != 100:
+    mean_acc = d_tree.score(DATASET['TEST']['X'], DATASET['TEST']['Y'])
+    print "Mean Accurancy - " + str(mean_acc)
 
 out_dir = '/tmp'
 if myarg.output_dir != None :
