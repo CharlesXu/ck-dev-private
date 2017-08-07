@@ -1466,9 +1466,9 @@ treePlot(d_tree, out_dir + os.sep + 'prova.pdf')
 
 clblast_root = myarg.clblast_root if myarg.clblast_root != None else "/home/marco/CK_TOOLS/lib-clblast-tune-master-gcc-6.2.0-linux-32/src"
 genSourceCode(clblast_root, myarg.kernel_name,	d_tree,DATASET['TRAINING'])
-dumpTrainingToFile(DATASET, out_dir + os.sep + 'test_'+str(ratio) + '_' + str(tree_depth) + '.json')
-printTestDataset(DATASET['TEST'], out_dir + os.sep + 'test_'+str(ratio) + '_' + str(tree_depth))
-printTestDatasetInfo(DATASET['TEST'],out_dir + os.sep +  'test_'+str(ratio) + '_' + str(tree_depth) + '.info')
+dumpTrainingToFile(DATASET, out_dir + os.sep + 'test_'+str(ratio) + '_' + str(myarg.tree_depth) + '.json')
+printTestDataset(DATASET['TEST'], out_dir + os.sep + 'test_'+str(ratio) + '_' + str(myarg.tree_depth))
+printTestDatasetInfo(DATASET['TEST'],out_dir + os.sep +  'test_'+str(ratio) + '_' + str(myarg.tree_depth) + '.info')
 
 print "*************** Statistics ***************"
 print "Dataset size : " + str( len(DATASET['TRAINING']['X']) + len(DATASET['TEST']['X']))
