@@ -13,14 +13,8 @@
 import ck.kernel as ck
 import os
 import argparse
+import json
 
-
-
-
-
-#Per il client il file è tmp-ck-clblast-client.json
-# e la chiave per i GFLOPS : processed_gflops
-# execution_time, m , n , k 
 
 platform = ''
 
@@ -166,8 +160,6 @@ def runPipeline(data_uoa, cmd_key, m,n,k, library_uid):
 
 def dvdt_accuracy(test_set,library_uid):
 
-       
-    # Se non è installata errore
     data_uoa = 'clblast-tune'
     cmd_key = 'default'
     ii={'action': 'search',
@@ -183,18 +175,10 @@ def dvdt_accuracy(test_set,library_uid):
     exp_dir=r['lst'][0]['path']
     exp_dir = exp_dir + os.sep + 'tmp'
     exp_file = exp_dir + os.sep + 'tmp-ck-clblast-client.json'
-    #Utilizzo default di program:clblast-tune selezionando la libreria library_tags
 
     
     results = []
     test_len = len(test_set)
-    # per ogni tripla (m,n,k) del test_set
-    # giro il program e prendo i gflops ottenuti
-    # calcolo le varie metriche :
-    # - differenza tra performance teoriche (PT) (tuner+eventuali kernel) e performance reale (PR) ottenuta con la libreria)
-    # - differenza tra 1 - (rapporto tra  PR e PT ) 
-    # - Mean square error  =  1/n * sum_{i=1}^{N} (PR - PT )^2
-    # - media pesata della differenze dei punti di sopra
 
     mean_diff = 0.0
     mean_square_diff = 0.0
@@ -207,9 +191,8 @@ def dvdt_accuracy(test_set,library_uid):
         k = test_set[i]['k']
         gflops_t = test_set[i]['gflops']
 
-        #eseguo test PR
-        runPipeline(data_uoa, cmd_key, m,n,k, library_uid):
-        #estraggo GFLOPS_REALI 
+        runPipeline(data_uoa, cmd_key, m,n,k, library_uid)
+     
         j_pr=json.load(open(exp_file))
         gflops_r = j_pr['processed_gflops']
         m_r = j_pr['m']
