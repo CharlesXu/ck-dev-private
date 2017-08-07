@@ -14,6 +14,7 @@ import ck.kernel as ck
 import os
 import argparse
 import json
+import copy
 
 
 platform = ''
@@ -65,7 +66,8 @@ def runPipeline(data_uoa, cmd_key, m,n,k, library_uid):
         print "[ERROR] : invalid library uid provided"
         return r
 
-    cdeps['lib-clblast'] = library_uid
+    # cdeps['lib-clblast'] = library_uid
+    # cdeps['lib-clblast']['for_run_time'] = 'yes'    
     ii={'action' : 'pipeline',
                 
         'target_os':tos,
