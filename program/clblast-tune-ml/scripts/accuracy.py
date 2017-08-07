@@ -51,9 +51,9 @@ def runPipeline(data_uoa, cmd_key, m,n,k, library_uid):
 
     # # Merge rdeps with cdeps for setting up the pipeline (which uses
     # # common deps), but tag them as "for_run_time".
-    for k in rdeps:
-        cdeps[k]=rdeps[k]
-        cdeps[k]['for_run_time']='yes'
+    for l in rdeps:
+        cdeps[l]=rdeps[l]
+        cdeps[l]['for_run_time']='yes'
     
     # Load the library speicified by the library_uid parameter
     ii = {
