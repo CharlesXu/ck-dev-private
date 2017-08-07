@@ -164,7 +164,7 @@ def runPipeline(data_uoa, cmd_key, m,n,k, library_uid):
 
 
 
-def dvdt_accuracy(library_uid):
+def dvdt_accuracy(test_set,library_uid):
 
        
     # Se non è installata errore
@@ -257,13 +257,14 @@ parser = argparse.ArgumentParser(description='Dvdt Accuracy')
 
 
 parser.add_argument('--library_uid', action = "store", required = True, help = "clblast multiconf library uid")
-parser.add_argument('--dataset_json', action ="store")
+parser.add_argument('--dataset_json', action ="store", required= True)
 parser.add_argument("--platform", action = "store", required = True)
 
 myarg=parser.parse_args()
 
 platform = myarg.platform
+dataset = json.load(open(myarg.dataset_json))
 
-acc = dvdt_accuracy(myarg.library_uid)
+acc = dvdt_accuracy(dataset['TEST']['Z'], myarg.library_uid)
 
 print acc
