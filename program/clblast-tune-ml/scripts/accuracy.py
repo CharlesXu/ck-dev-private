@@ -200,9 +200,9 @@ def dvdt_accuracy(test_set,library_uid):
         m_r = j_pr['m']
         n_r = j_pr['n']
         k_r = j_pr['k']
-        if m_r != m or n_r != n or k_r != k:
-            print "[FATAL] : the output file is not valid - invalid matrix size"
-            exit(1)
+        # if m_r != m or n_r != n or k_r != k:
+        #     print "[FATAL] : the output file is not valid - invalid matrix size"
+        #     exit(1)
         
         # PT - PR
         diff = gflops_t - gflops_r
