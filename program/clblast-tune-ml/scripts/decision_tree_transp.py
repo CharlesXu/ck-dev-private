@@ -1431,7 +1431,7 @@ parser.add_argument("--seed", type = int, help = "You can specify the initial se
 parser.add_argument("--quiet", action = "store_true", help = "It will suppress CK output")
 parser.add_argument("--csv", action="store", dest ="csv_files_dir", help="load Model matrix sizes from csv")
 parser.add_argument("--O", action = "store", dest = "out_json_file", default = '/tmp/out.json', help = "dump the training set on file")
-parser.add_argument("--ratio", action = "store", dest = "ratio", help = "define the ratio between training and test sets")
+parser.add_argument("--ratio", action = "store", dest = "ratio", help = "define the ratio between training and test sets (default 80:20 pareto)")
 parser.add_argument("--tree_criterion", action = "store", default = "gini", help = "{gini,entropy}")
 parser.add_argument("--tree_splitter", action = "store", default = "best", help ="{best,random}")
 parser.add_argument("--tree_min_samples_leaf", action = "store", default = 1)
@@ -1449,7 +1449,7 @@ DATASET=createTrainingSet(myarg)
 
 d_tree=createDecisionTree(DATASET['TRAINING'],myarg.tree_depth, myarg.tree_min_samples_leaf)
 
-ratio = 50 
+ratio = 80 
 if myarg.ratio != None:
     ratio = int(myarg.ratio)
 
