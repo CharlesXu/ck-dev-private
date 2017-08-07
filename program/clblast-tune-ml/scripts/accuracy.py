@@ -77,6 +77,7 @@ def runPipeline(data_uoa, cmd_key, m,n,k, library_uid):
         'data_uoa' : data_uoa,
         'cmd_key' : cmd_key,
         'prepare' : 'yes',
+        'dep.lib-clblast' : library_uid,
         'dependencies' : cdeps,
         'no_compiler_description' : 'yes',
         'out' : 'con',
