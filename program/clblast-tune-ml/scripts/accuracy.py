@@ -221,7 +221,7 @@ def dvdt_accuracy(test_set,library_uid):
             'n' : n , 
             'k' : k, 
             'GFLOPS_R' : gflops_r, 
-            'GFLOPS_T' : 'gflops_t', 
+            'GFLOPS_T' : gflops_t, 
             'diff' : diff, 
             'ratio' : ratio, 
             'sqare_diff': square_diff

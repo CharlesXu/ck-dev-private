@@ -1421,7 +1421,7 @@ parser.add_argument("--url", action = "store", dest = "training_url", help = "Cr
 parser.add_argument("--file", action = "store", dest ="fp", help = "Json file containing dump of training data")
 parser.add_argument("--random_samples", action = "store", type = int, dest = "random_num", help = "Number of random matrix sizes. The tuner will be launched on each matrix")
 parser.add_argument("--output_dir", action = "store", dest = "output_dir", help = "output_dir to store tuner results over training data")
-parser.add_argument("--clblast_root", action = "store", dest = "clblast_root", required = True, default = default_clblast_root, help = "absolute path to CLBlast root")
+parser.add_argument("--clblast_root", action = "store", dest = "clblast_root", required = True, help = "absolute path to CLBlast root")
 parser.add_argument("--max_num_leafs", action = "store", type = int, dest = "max_leafs", help = "the DT depth will be set to log_2(max_leafs)")
 parser.add_argument("--target_os", action = "store", dest = "tos")
 parser.add_argument("--device_id", action = "store", type = int, dest = "did")
