@@ -955,6 +955,7 @@ def getTrainingFromDirectory(kernels_array,output_dir):
         	'device_core_clock': device_core_clock,
         	'device_compute_units': device_compute_units,
         	'file_path' : e,
+            'gflops' : gflops,
         	})
         json_data.close()
 
@@ -1438,8 +1439,10 @@ parser.add_argument("--tree_presort", action = "store", default="true")
 parser.add_argument("--build_dataset", action = "store", default="false")
 parser.add_argument("--dataset_dir", action ="store", help = "the directory containing the dataset")
 parser.add_argument("--json", action = "store")
+parser.add_argument("--platform", action = "store", required = True)
 myarg=parser.parse_args()
 
+platform = myarg.platform
 
 pipeline_output = 'out' if myarg.quiet else 'con'
 DATASET=createTrainingSet(myarg)
