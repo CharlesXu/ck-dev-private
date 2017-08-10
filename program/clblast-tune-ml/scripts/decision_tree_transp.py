@@ -1430,7 +1430,7 @@ parser.add_argument("--max_tree_depth", action = "store", type = int, dest = "tr
 parser.add_argument("--seed", type = int, help = "You can specify the initial seed for reproducibility. It only works with --random_samples")
 parser.add_argument("--quiet", action = "store_true", help = "It will suppress CK output")
 parser.add_argument("--csv", action="store", dest ="csv_files_dir", help="load Model matrix sizes from csv")
-parser.add_argument("--O", action = "store", dest = "out_json_file", default = '/tmp/out.json', help = "dump the training set on file")
+parser.add_argument("--O", action = "store", dest = "out_json_file", default = '/tmp/out', help = "dump the training set on file")
 parser.add_argument("--ratio", action = "store", dest = "ratio", help = "define the ratio between training and test sets (default 80:20 pareto)")
 parser.add_argument("--tree_criterion", action = "store", default = "gini", help = "{gini,entropy}")
 parser.add_argument("--tree_splitter", action = "store", default = "best", help ="{best,random}")
@@ -1450,7 +1450,7 @@ platform = myarg.platform
 pipeline_output = 'out' if myarg.quiet else 'con'
 DATASET=createTrainingSet(myarg)
 if myarg.generate_tree == True:
-    dumpTrainingToFile(DATASET, out_dir + os.sep + 'test_'+str(ratio) + '_' + str(myarg.tree_depth) + '.json')
+    dumpTrainingToFile(DATASET, out_dir + os.sep + myarg.out_json_file + '_' +str(ratio) + '_' + str(myarg.tree_depth) + '.json')
     print "[INFO] : Dataset created"
     quit()
 
