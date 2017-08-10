@@ -64,6 +64,16 @@
       "name": "CLTune tool", 
       "sort": 40, 
       "tags": "tool,cltune"
+    },
+    "lib-clblas": {
+      "local": "yes",
+      "name": "CLBLAS library",
+      "sort": 30,
+      "tags": "lib,clblas",
+      "skip_installed": {
+        "android": "yes",
+        "win" : "yes"
+      }
     }
   }, 
   "end_full_path": {
