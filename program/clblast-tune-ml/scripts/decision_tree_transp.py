@@ -1445,6 +1445,9 @@ myarg=parser.parse_args()
 
 platform = myarg.platform
 
+out_dir = '/tmp'
+if myarg.output_dir != None :
+    out_dir = myarg.output_dir
 
 
 pipeline_output = 'out' if myarg.quiet else 'con'
@@ -1465,9 +1468,6 @@ if ratio != 100:
     mean_acc = d_tree.score(DATASET['TEST']['X'], DATASET['TEST']['Y'])
     print "Mean Accurancy - " + str(mean_acc)
 
-out_dir = '/tmp'
-if myarg.output_dir != None :
-    out_dir = myarg.output_dir
 
 treePlot(d_tree, out_dir + os.sep + 'prova.pdf')
 
