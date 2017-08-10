@@ -1452,7 +1452,7 @@ if myarg.output_dir != None :
 
 pipeline_output = 'out' if myarg.quiet else 'con'
 DATASET=createTrainingSet(myarg)
-if myarg.generate_tree == True:
+if myarg.generate_tree == False:
     dumpTrainingToFile(DATASET, out_dir + os.sep + myarg.out_json_file + '_' +str(ratio) + '_' + str(myarg.tree_depth) + '.json')
     print "[INFO] : Dataset created"
     quit()
