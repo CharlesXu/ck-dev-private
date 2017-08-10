@@ -1440,12 +1440,19 @@ parser.add_argument("--build_dataset", action = "store", default = False)
 parser.add_argument("--dataset_dir", action ="store", help = "the directory containing the dataset")
 parser.add_argument("--json", action = "store")
 parser.add_argument("--platform", action = "store", required = True)
+parser.add_argument("--generate_tree", action = "store", default = True)
 myarg=parser.parse_args()
 
 platform = myarg.platform
 
+
+
 pipeline_output = 'out' if myarg.quiet else 'con'
 DATASET=createTrainingSet(myarg)
+if myarg.generate_tree == True:
+    dumpTrainingToFile(DATASET, out_dir + os.sep + 'test_'+str(ratio) + '_' + str(myarg.tree_depth) + '.json')
+    print "[INFO] : Dataset created"
+    quit()
 
 d_tree=createDecisionTree(DATASET['TRAINING'],myarg.tree_depth, myarg.tree_min_samples_leaf)
 
