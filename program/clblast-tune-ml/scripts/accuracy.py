@@ -245,7 +245,7 @@ parser = argparse.ArgumentParser(description='Dvdt Accuracy')
 parser.add_argument('--library_uid', action = "store", required = True, help = "clblast multiconf library uid")
 parser.add_argument('--dataset_json', action ="store", required= True)
 parser.add_argument("--platform", action = "store", required = True)
-
+parser.add_argument("--output_file", action ="store", required = True)
 myarg=parser.parse_args()
 
 platform = myarg.platform
@@ -254,3 +254,7 @@ dataset = json.load(open(myarg.dataset_json))
 acc = dvdt_accuracy(dataset['TEST']['Z'], myarg.library_uid)
 
 print acc
+out = open(myarg.output_file,'w')
+json.dump(acc,out, indent = 4, sort_keys = True)
+out.close()
+print "Results stored in " + myarg.output_file
