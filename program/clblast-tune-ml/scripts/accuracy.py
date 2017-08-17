@@ -311,6 +311,9 @@ def dvdt_accuracy(test_set,library_uid):
             'sqare_diff': square_diff
         })
 
+    mean_diff = mean_diff / test_len
+    mean_ratio = mean_ratio / test_len
+    mean_square_diff = mean_square_diff / test_len
     accuracy = {
         'num_of_test' : test_len, 
         'mean_diff' : mean_diff,
