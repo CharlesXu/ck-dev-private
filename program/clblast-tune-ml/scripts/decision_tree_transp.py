@@ -1483,18 +1483,29 @@ dumpTrainingToFile(DATASET, out_dir + os.sep + 'test_'+str(ratio) + '_' + str(my
 printTestDataset(DATASET['TEST'], out_dir + os.sep + 'test_'+str(ratio) + '_' + str(myarg.tree_depth))
 printTestDatasetInfo(DATASET['TEST'],out_dir + os.sep +  'test_'+str(ratio) + '_' + str(myarg.tree_depth) + '.info')
 
+f=open(out_dir + os.sep +'statistics.info')
+
 print "*************** Statistics ***************"
+f.write("*************** Statistics ***************")
+
 print "Dataset size : " + str( len(DATASET['TRAINING']['X']) + len(DATASET['TEST']['X']))
+f.write("Dataset size : " + str( len(DATASET['TRAINING']['X']) + len(DATASET['TEST']['X'])))
+
 print "Training dataset ratio : " + str(myarg.ratio)
+f.write("Training dataset ratio : " + str(myarg.ratio))
+
 print "Decision tree  # leaves : " + str(num_leaf)
+f.write("Decision tree  # leaves : " + str(num_leaf))
+
 print "Decision heigth : " + str(tree_height)
+f.write("Decision heigth : " + str(tree_height))
 signSet = genConfSet(myarg.kernel_name, DATASET['TRAINING']['Z'])
 
 for i in range(len(myarg.kernel_name)):    
     print "Unique configurations for [" + myarg.kernel_name[i] + "] : " + str(len(signSet[i])) 
+    f.write("Unique configurations for [" + myarg.kernel_name[i] + "] : " + str(len(signSet[i])) )
 
-
-print "*************** Building the library ***************"
+# print "*************** Building the library ***************"
 
 #buildLibrary()
 
@@ -1502,7 +1513,9 @@ print "*************** Building the library ***************"
 print "*************** Calculate the Accurancy ***************"
 print "Mean Accurancy - " + str(mean_acc)
 
-
+f.write("*************** Calculate the Accurancy ***************")
+f.write("Mean Accurancy - " + str(mean_acc))
+f.close()
 
 def buildLibrary(tags = 'clblast'):
 
