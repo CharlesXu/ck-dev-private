@@ -1434,7 +1434,7 @@ parser.add_argument("--O", action = "store", dest = "out_json_file", default = '
 parser.add_argument("--ratio", action = "store", dest = "ratio", help = "define the ratio between training and test sets (default 80:20 pareto)")
 parser.add_argument("--tree_criterion", action = "store", default = "gini", help = "{gini,entropy}")
 parser.add_argument("--tree_splitter", action = "store", default = "best", help ="{best,random}")
-parser.add_argument("--tree_min_samples_leaf", action = "store", default = 1)
+parser.add_argument("--tree_min_samples_leaf", type = int, action = "store", default = 1)
 parser.add_argument("--tree_presort", action = "store", default = True)
 parser.add_argument("--build_dataset", action = "store", default = False)
 parser.add_argument("--dataset_dir", action ="store", help = "the directory containing the dataset")

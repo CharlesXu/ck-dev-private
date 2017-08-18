@@ -214,16 +214,16 @@ def dvdt_accuracy(test_set,library_uid):
         cdeps[l]=rdeps[l]
         cdeps[l]['for_run_time']='yes'
     
-    # Load the library speicified by the library_uid parameter
-    ii = {
-        'action' : 'load',
-        'module_uoa' : 'env',
-        'data_uoa' : library_uid
-    }
-    r = ck.access(ii)
-    if r['return'] > 0 :
-        print "[ERROR] : invalid library uid provided"
-        return r
+    # # Load the library speicified by the library_uid parameter
+    # ii = {
+    #     'action' : 'load',
+    #     'module_uoa' : 'env',
+    #     'data_uoa' : library_uid
+    # }
+    # r = ck.access(ii)
+    # if r['return'] > 0 :
+    #     print "[ERROR] : invalid library uid provided"
+    #     return r
 
     # cdeps['lib-clblast'] = library_uid
     # cdeps['lib-clblast']['for_run_time'] = 'yes'    
@@ -236,7 +236,7 @@ def dvdt_accuracy(test_set,library_uid):
         'data_uoa' : data_uoa,
         'cmd_key' : cmd_key,
         'prepare' : 'yes',
-        'dep.lib-clblast' : library_uid,
+        # 'dep.lib-clblast' : library_uid,
         'dependencies' : cdeps,
         'no_compiler_description' : 'yes',
         'out' : 'con',
