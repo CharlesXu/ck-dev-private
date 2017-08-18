@@ -21,88 +21,8 @@ platform = ''
 
 
 
-def runPipeline(data_uoa, cmd_key, m,n,k, library_uid,r):
-	 # # Detect basic platform info.
-  #   ii={'action':'detect',
-  #       'module_uoa':'platform',
-  #       'out':'out'}
-  #   r=ck.access(ii)
-  #   if r['return']>0: return r
+def runPipeline(data_uoa, cmd_key, m,n,k,r):
 
-  #   # Host and target OS params.
-  #   hos=r['host_os_uoa']
-  #   hosd=r['host_os_dict']
-
-  #   tos=r['os_uoa']
-  #   tosd=r['os_dict']
-  #   tdid=r['device_id']
-
-  #   # Load  program meta and desc to check deps.
-  #   ii={'action':'load',
-  #       'module_uoa':'program',
-  #       'data_uoa': data_uoa}
-  #   rx=ck.access(ii)
-  #   if rx['return']>0: return rx
-  #   mm=rx['dict']
-
-  #    # Get compile-time and run-time deps.
-  #   cdeps=mm.get('compile_deps',{})
-  #   rdeps=mm.get('run_deps',{})
-
-  #   # # Merge rdeps with cdeps for setting up the pipeline (which uses
-  #   # # common deps), but tag them as "for_run_time".
-  #   for l in rdeps:
-  #       cdeps[l]=rdeps[l]
-  #       cdeps[l]['for_run_time']='yes'
-    
-  #   # Load the library speicified by the library_uid parameter
-  #   ii = {
-  #       'action' : 'load',
-  #       'module_uoa' : 'env',
-  #       'data_uoa' : library_uid
-  #   }
-  #   r = ck.access(ii)
-  #   if r['return'] > 0 :
-  #       print "[ERROR] : invalid library uid provided"
-  #       return r
-
-  #   # cdeps['lib-clblast'] = library_uid
-  #   # cdeps['lib-clblast']['for_run_time'] = 'yes'    
-  #   ii={'action' : 'pipeline',
-                
-  #       'target_os':tos,
-  #       'device_id':tdid,
-
-  #       'module_uoa' : 'program',
-  #       'data_uoa' : data_uoa,
-  #       'cmd_key' : cmd_key,
-  #       'prepare' : 'yes',
-  #       'dep.lib-clblast' : library_uid,
-  #       'dependencies' : cdeps,
-  #       'no_compiler_description' : 'yes',
-  #       'out' : 'con',
-  #       'no_state_check' : 'yes',
-  #       'flags' : '-O3',
-  #       'cpu_freq':'max',
-  #       'gpu_freq':'max'
-  #       }
-  #   r=ck.access(ii)
-    
-  #   if r['return']>0: return r
-  #   fail=r.get('fail','')
-  #   if fail=='yes': return {'return':10, 'error':'pipeline failed ('+r.get('fail_reason','')+')'}
-
-  #   ready=r.get('ready','')
-  #   if ready!='yes': return {'return':11, 'error':'pipeline not ready'}
-
-
-  #   state=r['state']
-  #   tmp_dir=state['tmp_dir']
-  #   xcdeps=r.get('dependencies',{})
-  #   # Clean pipeline.
-  #   if 'ready' in r: del(r['ready'])
-  #   if 'fail' in r: del(r['fail'])
-  #   if 'return' in r: del(r['return'])
     pipeline=copy.deepcopy(r)
 
     ck.out('---------------------------------------------------------------------------------------')
@@ -111,10 +31,6 @@ def runPipeline(data_uoa, cmd_key, m,n,k, library_uid,r):
     size_m = [m]
     size_n = [n]
     size_k = [k]
-    
-    # size_m.append(m)
-    # size_n.append(n)
-    # size_k.append(k)
 
     cpipeline=copy.deepcopy(pipeline)
     ii={
@@ -161,7 +77,7 @@ def runPipeline(data_uoa, cmd_key, m,n,k, library_uid,r):
 
 
 
-def dvdt_accuracy(test_set,library_uid):
+def dvdt_accuracy(test_set):
 
     data_uoa = 'clblast-tune'
     cmd_key = 'default'
@@ -213,20 +129,7 @@ def dvdt_accuracy(test_set,library_uid):
     for l in rdeps:
         cdeps[l]=rdeps[l]
         cdeps[l]['for_run_time']='yes'
-    
-    # # Load the library speicified by the library_uid parameter
-    # ii = {
-    #     'action' : 'load',
-    #     'module_uoa' : 'env',
-    #     'data_uoa' : library_uid
-    # }
-    # r = ck.access(ii)
-    # if r['return'] > 0 :
-    #     print "[ERROR] : invalid library uid provided"
-    #     return r
-
-    # cdeps['lib-clblast'] = library_uid
-    # cdeps['lib-clblast']['for_run_time'] = 'yes'    
+       
     ii={'action' : 'pipeline',
                 
         'target_os':tos,
@@ -236,7 +139,6 @@ def dvdt_accuracy(test_set,library_uid):
         'data_uoa' : data_uoa,
         'cmd_key' : cmd_key,
         'prepare' : 'yes',
-        # 'dep.lib-clblast' : library_uid,
         'dependencies' : cdeps,
         'no_compiler_description' : 'yes',
         'out' : 'con',
@@ -278,7 +180,7 @@ def dvdt_accuracy(test_set,library_uid):
         k = test_set[i]['k']
         gflops_t = test_set[i]['gflops']
 
-        runPipeline(data_uoa, cmd_key, m,n,k, library_uid,r)
+        runPipeline(data_uoa, cmd_key, m,n,k,r)
      
         j_pr=json.load(open(exp_file))
         gflops_r = j_pr['processed_gflops']
@@ -329,7 +231,6 @@ def dvdt_accuracy(test_set,library_uid):
 parser = argparse.ArgumentParser(description='Dvdt Accuracy')
 
 
-parser.add_argument('--library_uid', action = "store", required = True, help = "clblast multiconf library uid")
 parser.add_argument('--dataset_json', action ="store", required= True)
 parser.add_argument("--platform", action = "store", required = True)
 parser.add_argument("--output_file", action ="store", required = True)
@@ -338,7 +239,7 @@ myarg=parser.parse_args()
 platform = myarg.platform
 dataset = json.load(open(myarg.dataset_json))
 
-acc = dvdt_accuracy(dataset['TEST']['Z'], myarg.library_uid)
+acc = dvdt_accuracy(dataset['TEST']['Z'])
 
 print acc
 out = open(myarg.output_file,'w')

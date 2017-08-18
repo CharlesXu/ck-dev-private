@@ -1434,7 +1434,8 @@ parser.add_argument("--O", action = "store", dest = "out_json_file", default = '
 parser.add_argument("--ratio", action = "store", dest = "ratio", help = "define the ratio between training and test sets (default 80:20 pareto)")
 parser.add_argument("--tree_criterion", action = "store", default = "gini", help = "{gini,entropy}")
 parser.add_argument("--tree_splitter", action = "store", default = "best", help ="{best,random}")
-parser.add_argument("--tree_min_samples_leaf", type = int, action = "store", default = 1)
+parser.add_argument("--tree_min_samples_leaf", action = "store", default = 1, help = "specify also the type with tree_min_samples_leaf_type")
+parser.add_argument("--tree_min_samples_leaf_type", action ="store", default= "int", help ="{int, float}")
 parser.add_argument("--tree_presort", action = "store", default = True)
 parser.add_argument("--build_dataset", action = "store", default = False)
 parser.add_argument("--dataset_dir", action ="store", help = "the directory containing the dataset")
@@ -1444,6 +1445,11 @@ parser.add_argument("--generate_tree", action = "store", default = True)
 myarg=parser.parse_args()
 
 platform = myarg.platform
+tree_min_samples_leaf = 0
+if tree_min_samples_leaf_type == "float":
+    tree_min_samples_leaf = float(myarg.tree_min_samples_leaf)
+else:
+    tree_min_samples_leaf = int(myarg.tree_min_samples_leaf)
 
 out_dir = '/tmp'
 if myarg.output_dir != None :
@@ -1457,7 +1463,7 @@ if myarg.generate_tree == False:
     print "[INFO] : Dataset created"
     quit()
 
-d_tree=createDecisionTree(DATASET['TRAINING'],myarg.tree_depth, myarg.tree_min_samples_leaf)
+d_tree=createDecisionTree(DATASET['TRAINING'],myarg.tree_depth, tree_min_samples_leaf)
 
 ratio = 80 
 if myarg.ratio != None:
