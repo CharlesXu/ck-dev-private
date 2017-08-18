@@ -1483,7 +1483,7 @@ dumpTrainingToFile(DATASET, out_dir + os.sep + 'test_'+str(ratio) + '_' + str(my
 printTestDataset(DATASET['TEST'], out_dir + os.sep + 'test_'+str(ratio) + '_' + str(myarg.tree_depth))
 printTestDatasetInfo(DATASET['TEST'],out_dir + os.sep +  'test_'+str(ratio) + '_' + str(myarg.tree_depth) + '.info')
 
-f=open(out_dir + os.sep +'statistics.info')
+f=open(out_dir + os.sep +'statistics.info', 'w')
 
 print "*************** Statistics ***************"
 f.write("*************** Statistics ***************")
