@@ -1085,7 +1085,7 @@ def createTrainingSet(arg):
 
     DATASET['W'] = routines_names
     
-    print DATASET['W']
+    #print DATASET['W']
     ratio = DEFAULT_RATIO
     if myarg.ratio != None:
         ratio = int(myarg.ratio)
