@@ -1446,7 +1446,7 @@ myarg=parser.parse_args()
 
 platform = myarg.platform
 tree_min_samples_leaf = 0
-if tree_min_samples_leaf_type == "float":
+if myarg.tree_min_samples_leaf_type == "float":
     tree_min_samples_leaf = float(myarg.tree_min_samples_leaf)
 else:
     tree_min_samples_leaf = int(myarg.tree_min_samples_leaf)
