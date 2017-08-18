@@ -37,7 +37,7 @@ import math
 ################################################################################
 
 #
-
+DEFAULT_RATIO=80
 pipeline_output='con' 
 program = 'clblast-tune-ml'
 program_check = 'clblast-check-ml'
@@ -1086,7 +1086,7 @@ def createTrainingSet(arg):
     DATASET['W'] = routines_names
     
     print DATASET['W']
-    ratio = 50
+    ratio = DEFAULT_RATIO
     if myarg.ratio != None:
         ratio = int(myarg.ratio)
     
@@ -1465,7 +1465,7 @@ if myarg.generate_tree == False:
 
 d_tree=createDecisionTree(DATASET['TRAINING'],myarg.tree_depth, tree_min_samples_leaf)
 
-ratio = 80 
+ratio = DEFAULT_RATIO 
 if myarg.ratio != None:
     ratio = int(myarg.ratio)
 
