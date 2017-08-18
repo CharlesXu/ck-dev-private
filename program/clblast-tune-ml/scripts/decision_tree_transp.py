@@ -1487,23 +1487,30 @@ f=open(out_dir + os.sep +'statistics.info', 'w')
 
 print "*************** Statistics ***************"
 f.write("*************** Statistics ***************")
+f.write("\n")
 
 print "Dataset size : " + str( len(DATASET['TRAINING']['X']) + len(DATASET['TEST']['X']))
 f.write("Dataset size : " + str( len(DATASET['TRAINING']['X']) + len(DATASET['TEST']['X'])))
+f.write("\n")
 
-print "Training dataset ratio : " + str(myarg.ratio)
-f.write("Training dataset ratio : " + str(myarg.ratio))
+print "Training dataset ratio : " + str(ratio)
+f.write("Training dataset ratio : " + str(ratio))
+f.write("\n")
 
 print "Decision tree  # leaves : " + str(num_leaf)
 f.write("Decision tree  # leaves : " + str(num_leaf))
+f.write("\n")
 
 print "Decision heigth : " + str(tree_height)
 f.write("Decision heigth : " + str(tree_height))
+f.write("\n")
+
 signSet = genConfSet(myarg.kernel_name, DATASET['TRAINING']['Z'])
 
 for i in range(len(myarg.kernel_name)):    
     print "Unique configurations for [" + myarg.kernel_name[i] + "] : " + str(len(signSet[i])) 
     f.write("Unique configurations for [" + myarg.kernel_name[i] + "] : " + str(len(signSet[i])) )
+    f.write("\n")
 
 # print "*************** Building the library ***************"
 
@@ -1514,7 +1521,9 @@ print "*************** Calculate the Accurancy ***************"
 print "Mean Accurancy - " + str(mean_acc)
 
 f.write("*************** Calculate the Accurancy ***************")
+f.write("\n")
 f.write("Mean Accurancy - " + str(mean_acc))
+f.write("\n")
 f.close()
 
 def buildLibrary(tags = 'clblast'):
