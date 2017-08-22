@@ -83,7 +83,7 @@ myarg=parser.parse_args()
 
 def_results = getResults(myarg.default_json)
 
-real_results = getResults(myarg.real_results)
+real_results = getResults(myarg.real_json)
 
 out_results = getAccuracy(def_results, real_results)
 
