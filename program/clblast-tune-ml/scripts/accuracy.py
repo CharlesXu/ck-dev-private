@@ -48,7 +48,7 @@ def runPipeline(data_uoa, cmd_key, m,n,k,r):
              '##env#CK_CLBLAST_KSIZE'
             ],
             [
-             '##env#CK_CLBLAST_NUM_ITERATIONS'
+             '##env#CK_CLBLAST_ITERATIONS'
             ]
         ],
         'choices_selection':[
