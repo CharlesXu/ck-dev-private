@@ -44,9 +44,9 @@ def getAccuracy(default_results, real_results):
         square_diff = (gflops_d - gflops_r)**2
         mean_square_diff += square_diff
         results.append({
-            'm' : m,
-            'n' : n , 
-            'k' : k, 
+            'm' : m_d,
+            'n' : n_d , 
+            'k' : k_d, 
             'GFLOPS_R' : gflops_r, 
             'GFLOPS_D' : gflops_d, 
             'GFLOPS_T' : gflops_r_t,
