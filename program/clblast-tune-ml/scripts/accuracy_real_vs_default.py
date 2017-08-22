@@ -68,6 +68,10 @@ def getAccuracy(default_results, real_results):
 
     return accuracy
 
+def getResults(input_file):
+    f = open(input_file)
+    j = json.load(f)
+    return j['results']
 
 parser = argparse.ArgumentParser(description = 'Real VS Default accuracy')
 parser.add_argument('--default_json', action = 'store', required = True)
