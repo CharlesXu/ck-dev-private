@@ -39,7 +39,7 @@ def getAccuracy(default_results, real_results):
         #1 - (PR /PT)
         if gflops_r != 0.0 and gflops_d != 0.0:
             ratio = 1.0 - ( gflops_d / gflops_r)
-        else 
+        else :
             ratio = 1.0
         mean_ratio += ratio
 
