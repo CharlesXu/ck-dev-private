@@ -37,7 +37,10 @@ def getAccuracy(default_results, real_results):
         mean_diff += diff
 
         #1 - (PR /PT)
-        ratio = 1.0 - ( gflops_d / gflops_r)
+        if gflops_r != 0.0 and gflops_d != 0.0:
+            ratio = 1.0 - ( gflops_d / gflops_r)
+        else 
+            ratio = 1.0
         mean_ratio += ratio
 
         #MSE 
