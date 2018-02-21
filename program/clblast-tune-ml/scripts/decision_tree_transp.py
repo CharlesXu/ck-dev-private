@@ -36,14 +36,14 @@ import math
 # GLOBAL VARIABLES
 ################################################################################
 
-#
+# Ratio between test and training sets
 DEFAULT_RATIO=80
 pipeline_output='con' 
 program = 'clblast-tune-ml'
 program_check = 'clblast-check-ml'
 cmd_key = 'xgemm-fp32'
-platform = 'firefly-rk3399'
-run=5
+platform = 'nvidia-dgx'
+run=3
 num_leaf = 0
 output_dir =''
 json_out_dir = ''
@@ -144,6 +144,7 @@ def generateInputDatasetK1(num_samples=6):
 
     return X
 
+# This function generates the dataset gridOfTwo 
 def updateInputDataset(min_value,max_value,step=256):
     X=[]
     for i in range(min_value,max_value,step):
@@ -161,7 +162,7 @@ def getLibraryRootPath(library_tags):
     }
     r = ck.access(ii)
     if r['return'] > 0:
-    	print "[ERROR] : unable to find library_tags entry " + library_tags
+    	print ("[ERROR] : unable to find library_tags entry " , library_tags, sep="")
     	return r
     return r
 
@@ -577,7 +578,7 @@ def runProgram(data_uoa, cmd_key, env, cdeps, rdeps):
     r_program=ck.access(ii)
     # ck.debug_out(r)
     if r_program['return']>0: 
-        print "[ERROR] : run failed"
+        print ("[ERROR] : run failed")
 
     return r_program['return']
 
@@ -622,7 +623,7 @@ def tuneLibrary(training,output_dir,kernels_name):
   
     training_dim = len (training)
     if training_dim <= 0 :
-        print "[ERROR] : Invalid training set"
+        print ("[ERROR] : Invalid training set")
         return None
     Z = []
     ii={'action': 'search',
@@ -631,7 +632,7 @@ def tuneLibrary(training,output_dir,kernels_name):
     }
     r = ck.access(ii)
     if r['return'] > 0:
-    	print "[ERROR] : unable to find program entry " + program
+    	print ("[ERROR] : unable to find program entry ", program, sep="")
     	return r
     env ={ 
         	'run' : run,
@@ -654,7 +655,7 @@ def tuneLibrary(training,output_dir,kernels_name):
 
 def getGFlops(exp_dir, inp):
     if not os.path.isfile(exp_dir + os.sep + inp):
-        print "Not found"
+        print ("Not found")
         return 0.0
     f=open(exp_dir + os.sep + inp)
     jdata=json.load(f)
@@ -662,7 +663,7 @@ def getGFlops(exp_dir, inp):
     if 'GFLOPS' in jdata['statistics']['best_configuration']:
         return jdata['statistics']['best_configuration']['GFLOPS']
     else:
-        print "Not found"
+        print ("Not found")
         return 0.0
 
 def getClFiles(exp_dir,fin):
@@ -691,8 +692,8 @@ def copyBests(exp_dir, out_dir):
             gflops_und=getGFlops(exp_dir,f_und)
             cl_dir = getClFiles(exp_dir,f_dir)
             cl_und = getClFiles(exp_dir,f_und)
-            print "Undirect " + str(gflops_und) + " " + f_und
-            print "Direct " + str(gflops_dir) + " " + f_dir
+            print ("Undirect ", str(gflops_und), " ", f_und, sep="")
+            print ("Direct " , str(gflops_dir) , " " , f_dir, sep="")
             if gflops_dir > gflops_und:
                 copyfile(exp_dir + os.sep + f_dir , output_dir + os.sep + f_dir)
                 copyfile(exp_dir + os.sep + cl_dir , output_dir + os.sep + cl_dir)
@@ -780,7 +781,7 @@ def checkUndirectTotaltime(input_file,gflops_compare):
     }
     r = ck.access(ii)
     if r['return'] > 0:
-        print "[ERROR] : unable to find program entry " + program_check
+        print ("[ERROR] : unable to find program entry ", program_check, sep="")
         return r
     env ={ 
             'run' : run,
@@ -850,7 +851,7 @@ def getFeatureNames():
     return feature_names
 
 def getTrainingFromUrl(training_url):
-	print "NOT IMPLEMENTED YET"
+	print ("NOT IMPLEMENTED YET")
 	return generateInputDataset()
 
 def getTrainingFromFile(training_file):
@@ -898,8 +899,8 @@ def getTrainingFromDirectory(kernels_array,output_dir):
         k = int(d['arg_k'])
        
         if len(d['results']) <= 0 :
-            print "[WARN] : The tuner was not able to find any valid configuration"
-            print "[WARN] : Skipping the matrix"
+            print ("[WARN] : The tuner was not able to find any valid configuration")
+            print ("[WARN] : Skipping the matrix")
             json_data.close()
             continue
 
@@ -1032,13 +1033,13 @@ def createTrainingSet(arg):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     else:
-        print "[INFO] : " + output_dir + " exists"
+        print ("[INFO] : " , output_dir , " exists", sep="")
    
     json_out_dir = output_dir + '/json'
     if not os.path.exists(json_out_dir):
         os.makedirs(json_out_dir)
     else:
-        print "[INFO] : " + json_out_dir + " exists"
+        print ("[INFO] : " , json_out_dir , " exists", sep = "")
 
 
     if arg.training_url != None :
@@ -1067,13 +1068,13 @@ def createTrainingSet(arg):
         X = updateInputDataset(1024,4096,256)
 
 
-    print "[INFO] : Training dataset len : " + str(len(X))
+    print ("[INFO] : Training dataset len : " , str(len(X)), sep="")
     
     
     if arg.build_dataset == True:
         r = tuneLibrary(X,output_dir,arg.kernel_name)
         if r > 0:
-            print "[FATAL] : exit"
+            print ("[FATAL] : exit")
             exit(1)
 
     else:
@@ -1168,7 +1169,7 @@ def genConfSet(kernels_name, training_set):
         signVet.append(list(count_vett[i]))
         set_dim += len(count_vett[i])
 
-    print "Collapsed " + str( len(training_set) - set_dim) + " of " + str(len(training_set))
+    print ("Collapsed " , str( len(training_set) - set_dim) , " of ", str(len(training_set)), sep="")
 
 
     return signVet
@@ -1188,7 +1189,7 @@ def genSourceCode(library_root_path, kernel_name, d_tree,training_set):
     #src/database/kernels
 
     if not os.path.exists(library_root_path):
-    	print "[ERROR] : invalid library_root_path"
+    	print ("[ERROR] : invalid library_root_path")
     	exit(1)
     	
 
@@ -1248,7 +1249,7 @@ def genSourceCode(library_root_path, kernel_name, d_tree,training_set):
     
     #Check the namespace_line and db_init_line are in the file
     if db_content_row.count(namespace_line) != 1 or db_content_row.count(db_init_line) != 1:
-        print "[FATAL] : invalid installation"
+        print ("[FATAL] : invalid installation")
         exit(1)
     
     
@@ -1350,9 +1351,9 @@ def splitDataset(dataset, ratio):
     dataset_len = len(dataset['X'])
     training_dim = int(math.ceil(( dataset_len / 100.0 ) * ratio))
     test_dim = dataset_len - training_dim
-    print training_dim
-    print test_dim 
-    print dataset_len
+    print (training_dim)
+    print (test_dim) 
+    print (dataset_len)
     idx_set=set()
     while len(idx_set) < training_dim:
         idx_set.add(random.randint(0,(dataset_len-1)))
@@ -1460,7 +1461,7 @@ pipeline_output = 'out' if myarg.quiet else 'con'
 DATASET=createTrainingSet(myarg)
 if myarg.generate_tree == False:
     dumpTrainingToFile(DATASET, out_dir + os.sep + myarg.out_json_file + '_' +str(ratio) + '_' + str(myarg.tree_depth) + '.json')
-    print "[INFO] : Dataset created"
+    print ("[INFO] : Dataset created")
     quit()
 
 d_tree=createDecisionTree(DATASET['TRAINING'],myarg.tree_depth, tree_min_samples_leaf)
@@ -1472,7 +1473,7 @@ if myarg.ratio != None:
 mean_acc=1
 if ratio != 100:
     mean_acc = d_tree.score(DATASET['TEST']['X'], DATASET['TEST']['Y'])
-    print "Mean Accurancy - " + str(mean_acc)
+    print ("Mean Accurancy - " , str(mean_acc))
 
 
 treePlot(d_tree, out_dir + os.sep + 'prova.pdf')
@@ -1485,30 +1486,30 @@ printTestDatasetInfo(DATASET['TEST'],out_dir + os.sep +  'test_'+str(ratio) + '_
 
 f=open(out_dir + os.sep +'statistics.info', 'w')
 
-print "*************** Statistics ***************"
+print ("*************** Statistics ***************")
 f.write("*************** Statistics ***************")
 f.write("\n")
 
-print "Dataset size : " + str( len(DATASET['TRAINING']['X']) + len(DATASET['TEST']['X']))
+print ("Dataset size : " , str( len(DATASET['TRAINING']['X']) , len(DATASET['TEST']['X'])),sep="")
 f.write("Dataset size : " + str( len(DATASET['TRAINING']['X']) + len(DATASET['TEST']['X'])))
 f.write("\n")
 
-print "Training dataset ratio : " + str(ratio)
+print ("Training dataset ratio : " , str(ratio))
 f.write("Training dataset ratio : " + str(ratio))
 f.write("\n")
 
-print "Decision tree  # leaves : " + str(num_leaf)
+print ("Decision tree  # leaves : " , str(num_leaf))
 f.write("Decision tree  # leaves : " + str(num_leaf))
 f.write("\n")
 
-print "Decision heigth : " + str(tree_height)
-f.write("Decision heigth : " + str(tree_height))
+print ("Decision heigth : " , str(tree_height), sep="")
+f.write("Decision heigth : " + str(tree_height), sep="")
 f.write("\n")
 
 signSet = genConfSet(myarg.kernel_name, DATASET['TRAINING']['Z'])
 
 for i in range(len(myarg.kernel_name)):    
-    print "Unique configurations for [" + myarg.kernel_name[i] + "] : " + str(len(signSet[i])) 
+    print ("Unique configurations for [" , myarg.kernel_name[i] + "] : " , str(len(signSet[i])), sep="" )
     f.write("Unique configurations for [" + myarg.kernel_name[i] + "] : " + str(len(signSet[i])) )
     f.write("\n")
 
@@ -1517,8 +1518,8 @@ for i in range(len(myarg.kernel_name)):
 #buildLibrary()
 
 
-print "*************** Calculate the Accurancy ***************"
-print "Mean Accurancy - " + str(mean_acc)
+print ("*************** Calculate the Accurancy ***************")
+print ("Mean Accurancy - " , str(mean_acc), sep="")
 
 f.write("*************** Calculate the Accurancy ***************")
 f.write("\n")
@@ -1537,7 +1538,7 @@ def buildLibrary(tags = 'clblast'):
 
     r = ck.access(ii)
     if r['return'] > 0: 
-        print "[ERROR] : Unable to find the library with tags : " + str(tags)
+        print ("[ERROR] : Unable to find the library with tags : " , str(tags), sep="")
         return r
 
     # Retrieve package info
@@ -1549,7 +1550,7 @@ def buildLibrary(tags = 'clblast'):
     }
     r = ck.access(ii)
     if r['return'] > 0: 
-        print "[ERROR] : Unable to get info for data_uoa : " + data_uoa
+        print ("[ERROR] : Unable to get info for data_uoa : " , data_uoa, sep="")
         return r
 
     library_path = r['dict']['customize']['path_lib']
@@ -1568,7 +1569,7 @@ def buildLibrary(tags = 'clblast'):
     }
     r = ck.access(ii)
     if r['return'] > 0: 
-        print "[ERROR] : Unable to rebuild the library"
+        print ("[ERROR] : Unable to rebuild the library")
     
 
     return r
