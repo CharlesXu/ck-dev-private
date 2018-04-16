@@ -1065,7 +1065,7 @@ def createTrainingSet(arg):
         arg.build_dataset = True
     else:
         # X = generateInputDataset()
-        X = updateInputDataset(1024,4096,256)
+        X = updateInputDataset(64,256,64)
 
 
     print ("[INFO] : Training dataset len : " , str(len(X)), sep="")
@@ -1438,11 +1438,11 @@ parser.add_argument("--tree_splitter", action = "store", default = "best", help 
 parser.add_argument("--tree_min_samples_leaf", action = "store", default = 1, help = "specify also the type with tree_min_samples_leaf_type")
 parser.add_argument("--tree_min_samples_leaf_type", action ="store", default= "int", help ="{int, float}")
 parser.add_argument("--tree_presort", action = "store", default = True)
-parser.add_argument("--build_dataset", action = "store", default = False)
+parser.add_argument("--build_dataset", action = "store_true", default = False)
 parser.add_argument("--dataset_dir", action ="store", help = "the directory containing the dataset")
 parser.add_argument("--json", action = "store")
 parser.add_argument("--platform", action = "store", required = True)
-parser.add_argument("--generate_tree", action = "store", default = True)
+parser.add_argument("--generate_tree", action = "store_true", default = False)
 myarg=parser.parse_args()
 
 platform = myarg.platform

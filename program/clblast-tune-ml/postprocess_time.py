@@ -31,6 +31,8 @@ VENDOR_TRANSLATION_TABLE = {
 
 # Server storing a copy of the database
 DATABASE_SERVER_URL = "https://raw.githubusercontent.com/CNugteren/CLBlast-database/master/database.json"
+DATABASE_SERVER_URL = "https://raw.githubusercontent.com/CNugteren/CLBlast-database/v1.0.0/database.json"
+
 VERBOSE=0
 def ck_postprocess(i):
     ck=i['ck_kernel']
