@@ -315,7 +315,7 @@ def checkUndirectTotaltime(input_file,gflops_compare):
     }
     r = ck.access(ii)
     if r['return'] > 0:
-        print("[ERROR] : unable to find program entry ", program_check, sep="")
+        print("[ERROR] : unable to find program entry ", program_check)
         return r
     env ={ 
             'run' : run,
@@ -397,8 +397,8 @@ def copyBests(exp_dir, out_dir):
             gflops_und=getGFlops(exp_dir,f_und)
             cl_dir = getClFiles(exp_dir,f_dir)
             cl_und = getClFiles(exp_dir,f_und)
-            print ("Undirect ", str(gflops_und), " ", f_und, sep="")
-            print ("Direct " , str(gflops_dir) , " " , f_dir, sep="")
+            print ("Undirect ", str(gflops_und), " ", f_und )
+            print ("Direct " , str(gflops_dir) , " " , f_dir)
             if gflops_dir > gflops_und:
                 copyfile(exp_dir + os.sep + f_dir , output_dir + os.sep + f_dir)
                 copyfile(exp_dir + os.sep + cl_dir , output_dir + os.sep + cl_dir)
