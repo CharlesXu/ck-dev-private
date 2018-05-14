@@ -191,7 +191,7 @@
       "local": "yes",
       "name": "C++ compiler",
       "sort": 0,
-      "tags": "compiler,lang-cpp"
+      "tags": "compiler,lang-cpp,gcc"
     },
     "lib-clblast": {
       "local": "yes",
