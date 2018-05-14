@@ -50,7 +50,7 @@ printf "done!\n"
 
 #Testing Internet Connection
 printf "[INFO] - Testing Internet connectivity..."
-wget https://www.wikipedia.org &> /dev/null
+wget https://www.wikipedia.org -O /dev/null &> /dev/null
 
 if [ $? -ne 0 ]
 then
@@ -59,6 +59,10 @@ then
 fi
 printf "done!\n"
 
+#Select the accelerator ID
+export CUDA_VISIBLE_DEVICES=0
+export GPU_DEVICES_ORDINAL=0
+
 #Install Clblast Multiconf Default
 printf "[INFO] - Installing CLBlast multiconf default\n"
 printf "[INFO] - Please follow the instructions on the screen\n"
@@ -66,17 +70,24 @@ printf "[INFO] - Press any key to continue\n"
 read -s
 ck install package:lib-clblast-master-universal-tune-multiconf --env.PACKAGE_GIT=YES
 
+#Run program to assign a default valure fro the compler 
+ck run program:tool-print-opencl-devices
+#Collecting GCC env UID
+gcc_uid=$(ck show env --tags=compiler,gcc | tail -n 1 | cut -d' ' -f1)
+llvm_uid=$(ck show env --tags=compiler,llvm | tail -n 1 | cut -d' ' -f1)
+ck rm env:$llvm_uid 
 #Generating datasets
 echo "[INFO] - Generating Datasets"
 
 echo "[INFO] - By default only a Toy dataset will be generated"
+
 echo "[INFO] - Remove the comment on the lines representing the datasets you want to generate"
 
 printf "[INFO] - Press any key to continue\n"
 read -s
 #Toy Dataset (3 matrices)
 echo "[INFO] - Generating Toy"
-ck run program:clblast-generate-dataset --cmd_key=Toy
+ck run program:clblast-generate-dataset --cmd_key=Toy --deps.compiler={$gcc_uid}
 
 #Power-Of-Two (216 matrices)
 #echo "[INFO] - Generating Power-Of-Two"
