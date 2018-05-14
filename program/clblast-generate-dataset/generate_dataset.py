@@ -666,7 +666,7 @@ def tuneLibrary(training,output_dir,kernels_name):
 
     exp_dir=r['lst'][0]['path']
     exp_dir = exp_dir + '/tmp'
-
+    print ("EXP_DIR:" + exp_dir)
     copyBests(exp_dir,output_dir)
     return 0
 
@@ -1030,7 +1030,7 @@ parser = argparse.ArgumentParser(description='Adaptive Library')
 
 
 #parser.add_argument("--random_samples", action = "store", type = int, dest = "random_num", help = "Number of random matrix sizes. The tuner will be launched on each matrix")
-parser.add_argument("--output_dir", action = "store", dest = "output_dir", help = "output_dir to store tuner results over training data")
+parser.add_argument("--output_dir", action = "store", required = True, dest = "output_dir", help = "output_dir to store tuner results over training data")
 #parser.add_argument("--target_os", action = "store", dest = "tos")
 #parser.add_argument("--device_id", action = "store", type = int, dest = "device_id", required = True)
 parser.add_argument("--kernel", action = "store", dest = "kernel_name", nargs ='*', default = ["xgemm"], help = "kernel name(s) you want data train on")
