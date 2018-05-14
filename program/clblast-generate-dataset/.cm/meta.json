@@ -13,7 +13,6 @@
     "Grid-of-Two": {
       "ignore_return_code": "no",
       "run_time": {
-	"need_compute_device": "opencl",
         "run_cmd_main": "$<<CK_ENV_COMPILER_PYTHON_FILE>>$ ../generate_dataset.py --kernel $<<CK_KERNEL_LIST>>$ --platform=$<<CK_TARGET_ARCHITECTURE>>$ --output_dir=$<<CK_OUTPUT_DIR>>$/GridOfTwo --load_matrix_from_csv ../dataset/grid_of_two.csv --device_id $<<CK_COMPUTE_PLATFORM_ID>>$",
         "run_cmd_out1": "tmp-stdout.tmp",
         "run_cmd_out2": "tmp-stderr.tmp",
@@ -23,7 +22,6 @@
     "Power-Of-Two": {
       "ignore_return_code": "no",
       "run_time": {
-	"need_compute_device": "opencl",
         "run_cmd_main": "$<<CK_ENV_COMPILER_PYTHON_FILE>>$ ../generate_dataset.py --kernel $<<CK_KERNEL_LIST>>$ --platform=$<<CK_TARGET_ARCHITECTURE>>$ --output_dir=$<<CK_OUTPUT_DIR>>$/PowerOfTwo --load_matrix_from_csv ../dataset/power_of_two.csv --device_id $<<CK_COMPUTE_PLATFORM_ID>>$",
         "run_cmd_out1": "tmp-stdout.tmp",
         "run_cmd_out2": "tmp-stderr.tmp",
@@ -33,7 +31,6 @@
     "Toy": {
       "ignore_return_code": "no",
       "run_time": {
-	"need_compute_device": "opencl",
         "run_cmd_main": "$<<CK_ENV_COMPILER_PYTHON_FILE>>$ ../generate_dataset.py --kernel $<<CK_KERNEL_LIST>>$ --platform=$<<CK_TARGET_ARCHITECTURE>>$ --output_dir=$<<CK_OUTPUT_DIR>>$/Toy --load_matrix_from_csv ../dataset/Toy.csv --device_id $<<CK_COMPUTE_PLATFORM_ID>>$",
         "run_cmd_out1": "tmp-stdout.tmp",
         "run_cmd_out2": "tmp-stderr.tmp",
@@ -43,7 +40,6 @@
     "anton-net": {
       "ignore_return_code": "no",
       "run_time": {
-	"need_compute_device": "opencl",
         "run_cmd_main": "$<<CK_ENV_COMPILER_PYTHON_FILE>>$ ../generate_dataset.py --kernel $<<CK_KERNEL_LIST>>$ --platform=$<<CK_TARGET_ARCHITECTURE>>$ --output_dir=$<<CK_OUTPUT_DIR>>$/Antonet --load_matrix_from_csv ../dataset/AntonNet.csv --device_id $<<CK_COMPUTE_PLATFORM_ID>>$",
         "run_cmd_out1": "tmp-stdout.tmp",
         "run_cmd_out2": "tmp-stderr.tmp",

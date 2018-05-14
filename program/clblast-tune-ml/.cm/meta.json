@@ -25,7 +25,6 @@
     "clblast_test_dvdt_runtime_check": {
       "ignore_return_code": "no",
       "run_time": {
-        "need_compute_device": "opencl",
         "post_process_cmds": [],
         "post_process_via_ck": "no",
         "pre_process_cmds": [],
@@ -46,7 +45,6 @@
       "ignore_return_code": "no",
       "run_time": {
         "fine_grain_timer_file": "tmp-ck-clblast-client.json",
-        "need_compute_device": "opencl",
         "post_process_cmds": [
           "python $#src_path_local#$ck_postprocess.py"
         ],
@@ -69,7 +67,6 @@
       "ignore_return_code": "no",
       "run_time": {
         "fine_grain_timer_file": "tmp-ck-clblast-tune.json",
-        "need_compute_device": "opencl",
         "post_process_cmds": [
           "python $#src_path_local#$postprocess_time.py"
         ],
@@ -93,7 +90,6 @@
       "ignore_return_code": "no",
       "run_time": {
         "fine_grain_timer_file": "tmp-ck-clblast-tune.json",
-        "need_compute_device": "opencl",
         "post_process_cmds": [
           "python $#src_path_local#$postprocess_time.py"
         ],
@@ -117,7 +113,6 @@
       "ignore_return_code": "no",
       "run_time": {
         "fine_grain_timer_file": "tmp-ck-clblast-tune.json",
-        "need_compute_device": "opencl",
         "post_process_cmds": [
           "python $#src_path_local#$postprocess_time.py"
         ],
@@ -141,7 +136,6 @@
       "ignore_return_code": "no",
       "run_time": {
         "fine_grain_timer_file": "tmp-ck-clblast-tune.json",
-        "need_compute_device": "opencl",
         "post_process_cmds": [
           "python $#src_path_local#$postprocess_time.py"
         ],
@@ -165,7 +159,6 @@
       "ignore_return_code": "no",
       "run_time": {
         "fine_grain_timer_file": "tmp-ck-clblast-tune.json",
-        "need_compute_device": "opencl",
         "post_process_cmds": [
           "python $#src_path_local#$postprocess_time.py"
         ],

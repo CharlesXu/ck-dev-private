@@ -60,8 +60,8 @@ fi
 printf "done!\n"
 
 #Select the accelerator ID
-export CUDA_VISIBLE_DEVICES=0
-export GPU_DEVICES_ORDINAL=0
+#export CUDA_VISIBLE_DEVICES=0
+#export GPU_DEVICES_ORDINAL=0
 
 #Install Clblast Multiconf Default
 printf "[INFO] - Installing CLBlast multiconf default\n"
