@@ -1057,6 +1057,6 @@ device_id = myarg.device_id;
 
 pipeline_output = 'out' if myarg.quiet else 'con'
 DATASET=createTrainingSet(myarg)
-dumpTrainingToFile(DATASET, out_dir + os.sep + myarg.out_json_file + '_' +str(myarg.ratio) + '_DEFAULT' + '.json')
+#dumpTrainingToFile(DATASET, out_dir + os.sep + myarg.out_json_file + '_' +str(myarg.ratio) + '_DEFAULT' + '.json')
 print ("[INFO] : Dataset created")
 

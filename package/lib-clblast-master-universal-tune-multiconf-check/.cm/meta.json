@@ -100,11 +100,8 @@
     "blas",
     "opencl-blas",
     "clblast",
-    "tune",
-    "clblast-tune",
     "vdev",
     "ml",
-    "multiconf",
     "check"
   ],
   "use_preprocess_scripts_from_another_entry": {

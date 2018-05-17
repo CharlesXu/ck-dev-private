@@ -75,7 +75,7 @@
       "local": "yes",
       "name": "CLBlast library",
       "sort": 10,
-      "tags": "lib,clblast-tune,check"
+      "tags": "lib,check"
     },
     "opencl": {
       "local": "yes",
