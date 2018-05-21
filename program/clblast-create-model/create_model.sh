@@ -70,26 +70,26 @@ ck run program:clblast-create-model --env.CK_DATASET_DIR=${DATASET_DIR}/Toy --en
 #Power-Of-Two
 datasetName="Power-Of-Two"
 tag="${datasetName}-h${height}-L${leafs}"
-ck install package:lib-clblast-master-universal-tune-multiconf --extra_version=-$tag --extra_tags=-$tag --env.PACKAGE_GIT="YES" 
+#ck install package:lib-clblast-master-universal-tune-multiconf --extra_version=-$tag --extra_tags=-$tag --env.PACKAGE_GIT="YES" 
 
 libroot=${CKTOOLS}/$(ls -1 ${CKTOOLS} | grep $tag)/src
-ck run program:clblast-create-model --env.CK_DATASET_DIR=${DATASET_DIR}/Toy --env.CK_CLBLAST_ROOT=${libroot} --env.CK_OUTPUT_DIR=${OUTDIR}/${tag} --cmd_key="Power-Of-Two"
+#ck run program:clblast-create-model --env.CK_DATASET_DIR=${DATASET_DIR}/PowerOfTwo --env.CK_CLBLAST_ROOT=${libroot} --env.CK_OUTPUT_DIR=${OUTDIR}/${tag} --cmd_key="Power-Of-Two"
 
 #Grid-Of-Two
 datasetName="Grid-Of-Two"
 tag="${datasetName}-h${height}-L${leafs}"
-ck install package:lib-clblast-master-universal-tune-multiconf --extra_version=-$tag --extra_tags=-$tag --env.PACKAGE_GIT="YES" 
+#ck install package:lib-clblast-master-universal-tune-multiconf --extra_version=-$tag --extra_tags=-$tag --env.PACKAGE_GIT="YES" 
 
 libroot=${CKTOOLS}/$(ls -1 ${CKTOOLS} | grep $tag)/src
-ck run program:clblast-create-model --env.CK_DATASET_DIR=${DATASET_DIR}/Toy --env.CK_CLBLAST_ROOT=${libroot} --env.CK_OUTPUT_DIR=${OUTDIR}/${tag} --cmd_key="Grid-Of-Two"
+#ck run program:clblast-create-model --env.CK_DATASET_DIR=${DATASET_DIR}/GridOfTwo --env.CK_CLBLAST_ROOT=${libroot} --env.CK_OUTPUT_DIR=${OUTDIR}/${tag} --cmd_key="Grid-Of-Two"
 
 #AntonNet 
 datasetName="AntonNet"
 tag="${datasetName}-h${height}-L${leafs}"
-ck install package:lib-clblast-master-universal-tune-multiconf --extra_version=-$tag --extra_tags=-$tag --env.PACKAGE_GIT="YES" 
+#ck install package:lib-clblast-master-universal-tune-multiconf --extra_version=-$tag --extra_tags=-$tag --env.PACKAGE_GIT="YES" 
 
 libroot=${CKTOOLS}/$(ls -1 ${CKTOOLS} | grep $tag)/src
-ck run program:clblast-create-model --env.CK_DATASET_DIR=${DATASET_DIR}/Toy --env.CK_CLBLAST_ROOT=${libroot} --env.CK_OUTPUT_DIR=${OUTDIR}/${tag} --cmd_key="anton-net"
+#ck run program:clblast-create-model --env.CK_DATASET_DIR=${DATASET_DIR}/AntonNet --env.CK_CLBLAST_ROOT=${libroot} --env.CK_OUTPUT_DIR=${OUTDIR}/${tag} --cmd_key="anton-net"
 
 
 
