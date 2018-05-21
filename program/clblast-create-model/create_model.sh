@@ -41,6 +41,10 @@ echo "                                                            ";
 
 #Fill the following variables and remove the '#' to uncomment them
 
+#Set this to your installation path
+CKTOOLS="${HOME}/CK-TOOLS"
+OUTDIR="/tmp"
+DATASET_DIR="/tmp"
 #TREE_DEPTH=0
 #MIN_SAMPLES_PER_LEAF=1
 #ROOT_OUTPUT_DIRECTORY
@@ -53,40 +57,41 @@ echo "                                                            ";
 #The selected model will be generated for each of the following datasets
 #Please uncomment[comment] the lines you are[are not] interested to  
 
+height=$TREE_DEPTH
+leafs=$MIN_SAMPLES_PER_LEAF
 #Toy
+datasetName="Toy"
+tag="${datasetName}-h${height}-L${leafs}"
+ck install package:lib-clblast-master-universal-tune-multiconf --extra_version=-$tag --extra_tags=-$tag --env.PACKAGE_GIT="YES" 
+
+libroot=${CKTOOLS}/$(ls -1 ${CKTOOLS} | grep $tag)/src
+ck run program:clblast-create-model --env.CK_DATASET_DIR=${DATASET_DIR}/Toy --env.CK_CLBLAST_ROOT=${libroot} --env.CK_OUTPUT_DIR=${OUTDIR}/${tag} --cmd_key="Toy"
 
 #Power-Of-Two
+datasetName="Power-Of-Two"
+tag="${datasetName}-h${height}-L${leafs}"
+ck install package:lib-clblast-master-universal-tune-multiconf --extra_version=-$tag --extra_tags=-$tag --env.PACKAGE_GIT="YES" 
+
+libroot=${CKTOOLS}/$(ls -1 ${CKTOOLS} | grep $tag)/src
+ck run program:clblast-create-model --env.CK_DATASET_DIR=${DATASET_DIR}/Toy --env.CK_CLBLAST_ROOT=${libroot} --env.CK_OUTPUT_DIR=${OUTDIR}/${tag} --cmd_key="Power-Of-Two"
 
 #Grid-Of-Two
+datasetName="Grid-Of-Two"
+tag="${datasetName}-h${height}-L${leafs}"
+ck install package:lib-clblast-master-universal-tune-multiconf --extra_version=-$tag --extra_tags=-$tag --env.PACKAGE_GIT="YES" 
+
+libroot=${CKTOOLS}/$(ls -1 ${CKTOOLS} | grep $tag)/src
+ck run program:clblast-create-model --env.CK_DATASET_DIR=${DATASET_DIR}/Toy --env.CK_CLBLAST_ROOT=${libroot} --env.CK_OUTPUT_DIR=${OUTDIR}/${tag} --cmd_key="Grid-Of-Two"
 
 #AntonNet 
+datasetName="AntonNet"
+tag="${datasetName}-h${height}-L${leafs}"
+ck install package:lib-clblast-master-universal-tune-multiconf --extra_version=-$tag --extra_tags=-$tag --env.PACKAGE_GIT="YES" 
+
+libroot=${CKTOOLS}/$(ls -1 ${CKTOOLS} | grep $tag)/src
+ck run program:clblast-create-model --env.CK_DATASET_DIR=${DATASET_DIR}/Toy --env.CK_CLBLAST_ROOT=${libroot} --env.CK_OUTPUT_DIR=${OUTDIR}/${tag} --cmd_key="anton-net"
 
 
-#Generating datasets
-echo "[INFO] - Generating Datasets"
 
-echo "[INFO] - By default only a Toy dataset will be generated"
-
-echo "[INFO] - Remove the comment on the lines representing the datasets you want to generate"
-
-printf "[INFO] - Press any key to continue\n"
-read -s
-#Toy Dataset (3 matrices)
-echo "[INFO] - Generating Toy"
-ck run program:clblast-generate-dataset --cmd_key=Toy --deps.compiler={$gcc_uid}
-
-#Power-Of-Two (216 matrices)
-#echo "[INFO] - Generating Power-Of-Two"
-#ck run program:clblast-generate-dataset --cmd_key=Power-Of-Two
-
-#Grid-Of-Two (3375 matrices)
-#echo "[INFO] - Generating Grid-Of-Two"
-#ck run program:clblast-generate-dataset --cmd_key=Grid-Of-Two
-
-#AntonNet (458 matrices)
-#echo "[INFO] - Generating AntonNet"
-#ck run program:clblast-generate-dataset --cmd_key=AntonNet
-
-
-echo "[INFO] - All the datasets have been generated"
+echo "[INFO] - All the models have been generated"
 
