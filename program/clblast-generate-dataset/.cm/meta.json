@@ -10,10 +10,10 @@
   "process_in_tmp": "yes",
   "program": "yes",
   "run_cmds": {
-    "Grid-of-Two": {
+    "Grid-Of-Two": {
       "ignore_return_code": "no",
       "run_time": {
-        "run_cmd_main": "$<<CK_ENV_COMPILER_PYTHON_FILE>>$ ../generate_dataset.py --kernel $<<CK_KERNEL_LIST>>$ --platform=$<<CK_TARGET_ARCHITECTURE>>$ --output_dir=$<<CK_OUTPUT_DIR>>$/GridOfTwo --load_matrix_from_csv ../dataset/grid_of_two.csv --device_id $<<CK_COMPUTE_PLATFORM_ID>>$",
+        "run_cmd_main": "$<<CK_ENV_COMPILER_PYTHON_FILE>>$ ../generate_dataset.py --kernel $<<CK_KERNEL_LIST>>$ --platform=$<<CK_TARGET_ARCHITECTURE>>$ --output_dir=$<<CK_OUTPUT_DIR>>$/Grid-Of-Two --load_matrix_from_csv ../dataset/grid_of_two.csv --device_id $<<CK_COMPUTE_PLATFORM_ID>>$",
         "run_cmd_out1": "tmp-stdout.tmp",
         "run_cmd_out2": "tmp-stderr.tmp",
         "run_output_files": []
@@ -22,7 +22,7 @@
     "Power-Of-Two": {
       "ignore_return_code": "no",
       "run_time": {
-        "run_cmd_main": "$<<CK_ENV_COMPILER_PYTHON_FILE>>$ ../generate_dataset.py --kernel $<<CK_KERNEL_LIST>>$ --platform=$<<CK_TARGET_ARCHITECTURE>>$ --output_dir=$<<CK_OUTPUT_DIR>>$/PowerOfTwo --load_matrix_from_csv ../dataset/power_of_two.csv --device_id $<<CK_COMPUTE_PLATFORM_ID>>$",
+        "run_cmd_main": "$<<CK_ENV_COMPILER_PYTHON_FILE>>$ ../generate_dataset.py --kernel $<<CK_KERNEL_LIST>>$ --platform=$<<CK_TARGET_ARCHITECTURE>>$ --output_dir=$<<CK_OUTPUT_DIR>>$/Power-Of-Two --load_matrix_from_csv ../dataset/power_of_two.csv --device_id $<<CK_COMPUTE_PLATFORM_ID>>$",
         "run_cmd_out1": "tmp-stdout.tmp",
         "run_cmd_out2": "tmp-stderr.tmp",
         "run_output_files": []
@@ -37,7 +37,7 @@
         "run_output_files": []
       }
     },
-    "anton-net": {
+    "AntonNet": {
       "ignore_return_code": "no",
       "run_time": {
         "run_cmd_main": "$<<CK_ENV_COMPILER_PYTHON_FILE>>$ ../generate_dataset.py --kernel $<<CK_KERNEL_LIST>>$ --platform=$<<CK_TARGET_ARCHITECTURE>>$ --output_dir=$<<CK_OUTPUT_DIR>>$/AntonNet --load_matrix_from_csv ../dataset/AntonNet.csv --device_id $<<CK_COMPUTE_PLATFORM_ID>>$",

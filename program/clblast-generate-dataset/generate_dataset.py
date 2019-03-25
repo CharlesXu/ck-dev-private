@@ -18,8 +18,6 @@ from shutil import copyfile
 import json
 from sklearn import tree
 import copy
-#import pydotplus 
-#import graphviz
 import random
 import sys
 import glob
@@ -227,13 +225,6 @@ def runPipelineCheck(data_uoa, cmd_key, env, cdeps, rdeps, M, N, K):
         'iterations':-1,
         'repetitions':1,
         'record':'no',
-        # 'record_failed':'yes',
-        # 'record_params':{
-        #     'search_point_by_features':'yes'
-        # },
-        # 'record_repo':record_repo,
-        # 'record_uoa':record_uoa,
-        # 'tags':['check_training_dataset', cmd_key, platform],
         'pipeline': cpipeline,
         'out':pipeline_output
 
@@ -351,7 +342,6 @@ def checkUndirectTotaltime(input_file,gflops_compare):
         json_data['statistics']['best_configuration']['GFLOPS'] = gflops_all
         f.close()
         f=open(input_file,"w")
-        #f=open(input_file+'.1',"w")
         json.dump(json_data, f, sort_keys=True, indent = 4)
         f.close()
         return True
@@ -701,23 +691,6 @@ def loadModelMatrixesFromJson(json_file):
     return j
 
 
-def getTrainingFromFile(training_file):
-	json_data = open(training_file)
-	TRAINING_SET = json.load(json_data)
-	json_data.close()
-	return TRAINING_SET
-
-def getRandomMatrix(random_num=1, seed=None):
-    X = []
-    random.seed(seed)
-    for i in range(random_num):
-        m = 2 ** random.randint(1, 12)
-        n = 2 ** random.randint(1, 12)
-        k = 2 ** random.randint(1, 12)
-        X.append({'m' : m, 'n' : n, 'k': k})
-
-    return X
-
 def getAllMatrixFromSet(dataset):
     X=[]
     for e in dataset:
@@ -726,215 +699,6 @@ def getAllMatrixFromSet(dataset):
     
     return X
 
-# This function generates the dataset gridOfTwo 
-def updateInputDataset(min_value,max_value,step=256):
-    X=[]
-    for i in range(min_value,max_value,step):
-        for j in range(min_value,max_value,step):
-            for y in range(min_value,max_value,step):
-                curr={'m': i, 'n': j ,'k' : y}
-                X.append(curr)
-    return X
-
-
-
-
-def copyDataset(src, dst):
-    from distutils.dir_util import copy_tree
-    copy_tree(src,dst)
-
-def getKernelId(kernels_array, kernel_name):
-  
-    for i in range(len(kernels_array)):
-        if kernel_name == kernels_array[i]:
-            return i
-
-def  genConfSign(parameters):
-    sign = ""
-    for p in parameters:
-        sign+= p + str(parameters[p])
-
-    return sign
-
-
-def getTrainingFromDirectory(kernels_array,output_dir):
-    X=[] #features
-    Y=[] #labels
-    Z=[] #extra features (not used now)
-   
-    count=0
-    for e in os.listdir(output_dir):
-        if not  os.path.isfile(output_dir + os.sep + e) :
-            continue
-
-        if 'tune' in e:
-            continue
-        
-        json_data = open(output_dir + os.sep + e)
-        d = json.load(json_data)
-               
-        m = int(d['arg_m'])
-        n = int(d['arg_n'])
-        k = int(d['arg_k'])
-       
-        if len(d['results']) <= 0 :
-            print ("[WARN] : The tuner was not able to find any valid configuration")
-            print ("[WARN] : Skipping the matrix")
-            json_data.close()
-            continue
-
-        kernel = d['kernel_family']
-        kernel = kernel[:-2]
-        # print "KERNEL : " + kernel
-        precision = d['precision']
-        device = d['device']
-        device_type = d['device_type']
-        device_vendor = d['device_vendor']
-        device_core_clock = d['device_core_clock']
-        device_compute_units = d['device_compute_units']
-        json_data.close()
-
-        tmp_file = ( 'tmp-ck-clblast-tune-'+kernel+'-multiconf-'+str(m)+ '-'+str(n)+ '-'+str(k)+ '-'+precision + '.json')
-        json_data = open(output_dir + os.sep + tmp_file)
-        d = json.load(json_data)
-        
-
-        # Could be interesting to verify the configuration by using the client 
-        if 'GFLOPS' in d['statistics']['best_configuration'] : 
-            gflops = d['statistics']['best_configuration']['GFLOPS']
-            parameters = d['statistics']['best_configuration']['parameters']
-            time = d['statistics']['best_configuration']['time']
-        else:
-            gflops = 0
-            parameters = None
-            time = sys.float_info.max
-
-        
-        kernel_id = getKernelId(kernels_array, kernel)
-        conf_sign = genConfSign(parameters)
-      	
-        count +=1
-        # NOTE : For now we use only m, n, k as features and gflops as labels
-        X.append([ m,n,k])
-        #X.append({'m': m, 'n' : n , 'k' : k})
-        Y.append(conf_sign)
-        #Y.append(str(math.ceil(gflops)))
-        Z.append({
-        	'm': m, 
-        	'n' : n , 
-        	'k' : k, 
-        	'kernel': kernel,
-        	'kernel_id' : kernel_id,
-            'conf_sign' : conf_sign,
-        	'parameters': parameters, 
-        	'time': time, 
-        	'precision' : precision,
-        	'device': device,
-        	'device_type' : device_type,
-        	'device_vendor' : device_vendor,
-        	'device_core_clock': device_core_clock,
-        	'device_compute_units': device_compute_units,
-        	'file_path' : e,
-            'gflops' : gflops,
-        	})
-        json_data.close()
-
-    T={'X' : X, 'Y' : Y, 'Z' : Z}
-    return T
-
-
-
-def genConfSet(kernels_name, training_set):
-    signVet = []
-    count_vett = []
-    for i in range(len(kernels_name)):
-        s = set()
-        count_vett.append(s)
-
-    for i in training_set: 
-        idx = i['kernel_id']
-        sign = i['conf_sign']
-        count_vett[idx].add(sign)
-
-    set_dim = 0 
-    for i in range(len(kernels_name)):
-        signVet.append(list(count_vett[i]))
-        set_dim += len(count_vett[i])
-
-    print ("Collapsed " , str( len(training_set) - set_dim) , " of ", str(len(training_set)), sep="")
-
-
-    return signVet
-
-def kernelToFamily(kernel):
-    k=re.sub(r'_\d+', '', kernel)
-    k = k.split('_')
-    f=''
-    for i in k:
-        f += i
-    return f.capitalize()
-
-def generateRoutinesNamesEnhanced(kernels_name, training_set, signSet):
-    routines_names = []
-    count_vett=[]
-    
-    for i in range(len(kernels_name)):
-        count_vett.append(0)
-    
-    for i in training_set:
-        idx = i['kernel_id']
-        sign = i['conf_sign']
-        curr= kernelToFamily(kernels_name[idx]) + str(signSet[idx].index(sign))
-        count_vett[idx] +=1
-        routines_names.append({'kernel':curr, 'used': 0, 'sign' : sign})
-
-    return routines_names
-
-
-def splitDataset(dataset, ratio):
-    #ratio tra 0 e 100
-    if ratio > 100 or ratio < 0 : 
-        print("[ERROR] : invalid ratio")
-        exit(1)
-    random.seed(1)
-    TRAINING = []
-    TEST = []
-    SET = []
-    dataset_len = len(dataset['X'])
-    training_dim = int(math.ceil(( dataset_len / 100.0 ) * ratio))
-    test_dim = dataset_len - training_dim
-    print (training_dim)
-    print (test_dim) 
-    print (dataset_len)
-    idx_set=set()
-    while len(idx_set) < training_dim:
-        idx_set.add(random.randint(0,(dataset_len-1)))
-
-    # print idx_set
-    X=[]
-    Y=[]
-    W=[]
-    Z=[]
-    for i in idx_set:
-        X.append(dataset['X'][i])
-        Y.append(dataset['Y'][i])
-        W.append(dataset['W'][i])
-        Z.append(dataset['Z'][i])
-    
-    TRAINING = {'X' : X , 'Y' : Y, 'W' : W, 'Z' : Z}
-    X=[]
-    Y=[]
-    W=[]
-    Z=[]
-    for i in range(dataset_len):
-        if not i in idx_set:
-            X.append(dataset['X'][i])
-            Y.append(dataset['Y'][i])
-            W.append(dataset['W'][i])
-            Z.append(dataset['Z'][i])
-
-    TEST = {'X' : X , 'Y' : Y, 'W' : W, 'Z' : Z}
-    return {'TRAINING': TRAINING, 'TEST' : TEST}
 
 
 # Create the Training Set
@@ -960,20 +724,12 @@ def createTrainingSet(arg):
         print ("[INFO] : " , json_out_dir , " exists", sep = "")
 
 
-    #if arg.fp != None:
-    #	DATASET = getTrainingFromFile(arg.fp)
-    #	return DATASET
     
     if arg.csv_files_dir != None:
         M = loadModelMatrixes(arg.csv_files_dir)
-        #X = getRandomMatrixFromSet(M,5)
         X = getAllMatrixFromSet(M)
         # Override default parameter
         build_dataset = True 
-    #elif arg.random_num != None:
-    #    X = getRandomMatrix(arg.random_num,arg.seed)
-        # Override default parameter
-    #    build_dataset = True 
     elif arg.load_matrix_from_csv != None:
     	X = loadMatrixesFromCsv(arg.load_matrix_from_csv)
     	build_dataset = True
@@ -982,7 +738,6 @@ def createTrainingSet(arg):
         build_dataset = True
     else:
         X = generateInputDataset()
-        #X = updateInputDataset(64,256,64)
 
 
     print ("[INFO] : Training dataset len : " , str(len(X)), sep="")
@@ -994,32 +749,7 @@ def createTrainingSet(arg):
             print ("[FATAL] : exit")
             exit(1)
   
-    #else:
-    #    if arg.dataset_dir != None:
-    #        copyDataset(arg.dataset_dir, output_dir)
-    #DATASET = getTrainingFromDirectory(arg.kernel_name,output_dir)
-    #signSet = genConfSet(arg.kernel_name, DATASET['Z'])
-    #routines_names = generateRoutinesNamesEnhanced(arg.kernel_name,DATASET['Z'], signSet)
 
-    #DATASET['W'] = routines_names
-    
-    #print DATASET['W']
-    #ratio = DEFAULT_RATIO
-    #if myarg.ratio != None:
-    #    ratio = int(myarg.ratio)
-    
-    #DATASET = splitDataset(DATASET, ratio)
-    #return DATASET
-
-################################################################################
-
-# DUMP TRAINING DATASET
-################################################################################
-
-def dumpTrainingToFile(training_set, output_file_path='/tmp/out.json'):
-    out_file = open(output_file_path,'w')
-    json.dump(training_set,out_file, sort_keys = True,indent = 4)
-    out_file.close()
 
 ################################################################################
 ################################################################################
@@ -1057,6 +787,5 @@ device_id = myarg.device_id;
 
 pipeline_output = 'out' if myarg.quiet else 'con'
 DATASET=createTrainingSet(myarg)
-#dumpTrainingToFile(DATASET, out_dir + os.sep + myarg.out_json_file + '_' +str(myarg.ratio) + '_DEFAULT' + '.json')
 print ("[INFO] : Dataset created")
 

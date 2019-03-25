@@ -13,8 +13,26 @@
     "Grid-Of-Two": {
       "ignore_return_code": "no",
       "run_time": {
-        "run_cmd_main": "$<<CK_ENV_COMPILER_PYTHON_FILE>>$ ../create_model.py --kernel $<<CK_KERNEL_LIST>>$ --platform=$<<CK_TARGET_ARCHITECTURE>>$ --dataset_dir=$<<CK_OUTPUT_DIR>>$/GridOfTwo --clblast_root=$<<CK_CLBLAST_ROOT>>$ --max_tree_depth $<<CK_MAX_TREE_DEPTH>>$ --tree_min_samples_leaf $<<CK_MIN_SAMPLES_LEAD>>$",
+        "run_cmd_main": "$<<CK_ENV_COMPILER_PYTHON_FILE>>$ ../create_model.py --kernel $<<CK_KERNEL_LIST>>$ --platform=$<<CK_TARGET_ARCHITECTURE>>$ --dataset_dir=$<<CK_OUTPUT_DIR>>$/Toy --clblast_root=$<<CK_CLBLAST_ROOT>>$ --max_tree_depth $<<CK_MAX_TREE_DEPTH>>$ --tree_min_samples_leaf $<<CK_MIN_SAMPLES_LEAF>>$ --output_dir=$<<CK_OUTPUT_DIR>>$",
         "run_cmd_out1": "tmp-stdout.tmp",
+        "run_cmd_out2": "tmp-stderr.tmp",
+        "run_output_files": []
+      }
+    },
+    "Toy": {
+      "ignore_return_code": "no",
+      "run_time": {
+        "run_cmd_main": "$<<CK_ENV_COMPILER_PYTHON_FILE>>$ ../create_model.py --kernel $<<CK_KERNEL_LIST>>$ --platform=$<<CK_TARGET_ARCHITECTURE>>$ --dataset_dir=$<<CK_DATASET_DIR>>$/Toy --clblast_root=$<<CK_CLBLAST_ROOT>>$ --max_tree_depth $<<CK_MAX_TREE_DEPTH>>$ --tree_min_samples_leaf $<<CK_MIN_SAMPLES_LEAF>>$ --output_dir=$<<CK_OUTPUT_DIR>>$",
+        "run_cmd_out1": "tmp-stdout.tmp",
+        "run_cmd_out2": "tmp-stderr.tmp",
+        "run_output_files": []
+      }
+    },
+    "AntonNet": {
+      "ignore_return_code": "no",
+      "run_time": {
+        "run_cmd_main": "$<<CK_ENV_COMPILER_PYTHON_FILE>>$ ../create_model.py --kernel $<<CK_KERNEL_LIST>>$ --platform=$<<CK_TARGET_ARCHITECTURE>>$ --dataset_dir $<<CK_DATASET_DIR>>$/Toy --output_dir $<<CK_OUTPUT_DIR>>$ --clblast_root=$<<CK_CLBLAST_ROOT>>$ --max_tree_depth $<<CK_MAX_TREE_DEPTH>>$ --tree_min_samples_leaf $<<CK_MIN_SAMPLES_LEAF>>$ --output_dir=$<<CK_OUTPUT_DIR>>$",
+        "run_cmd_out1": "tmp-stdout.tmp", 
         "run_cmd_out2": "tmp-stderr.tmp",
         "run_output_files": []
       }
@@ -22,49 +40,14 @@
     "Power-Of-Two": {
       "ignore_return_code": "no",
       "run_time": {
-        "output_invariant_of_repeat": "yes",
-        "run_cmd_main": "$<<CK_ENV_COMPILER_PYTHON_FILE>>$ ../generate_dataset.py --kernel $<<CK_KERNEL_LIST>>$ --platform=$<<CK_TARGET_ARCHITECTURE>>$ --output_dir=$<<CK_OUTPUT_DIR>>$/Antonet --load_matrix_from_csv ../dataset/power_of_two.csv",
-        "run_cmd_out1": "tmp-stdout.tmp",
-        "run_cmd_out2": "tmp-stderr.tmp",
-        "run_output_files": [
-          "tmp-ck-timer.json",
-          "tmp-ck-output.bin",
-          "tmp-ck-output.json"
-        ]
-      }
-    },
-    "Toy": {
-      "ignore_return_code": "no",
-      "run_time": {
-        "run_cmd_main": "$<<CK_ENV_COMPILER_PYTHON_FILE>>$ ../create_model.py --kernel $<<CK_KERNEL_LIST>>$ --platform=$<<CK_TARGET_ARCHITECTURE>>$ --dataset_dir $<<CK_DATASET_DIR>>$/Toy --output_dir $<<CK_OUTPUT_DIR>>$ --clblast_root=$<<CK_CLBLAST_ROOT>>$ --max_tree_depth $<<CK_MAX_TREE_DEPTH>>$ --tree_min_samples_leaf $<<CK_MIN_SAMPLES_LEAF>>$",
+        "run_cmd_main": "$<<CK_ENV_COMPILER_PYTHON_FILE>>$ ../create_model.py --kernel $<<CK_KERNEL_LIST>>$ --platform=$<<CK_TARGET_ARCHITECTURE>>$ --dataset_dir $<<CK_DATASET_DIR>>$/Toy --output_dir $<<CK_OUTPUT_DIR>>$ --clblast_root=$<<CK_CLBLAST_ROOT>>$ --max_tree_depth $<<CK_MAX_TREE_DEPTH>>$ --tree_min_samples_leaf $<<CK_MIN_SAMPLES_LEAF>>$ --output_dir=$<<CK_OUTPUT_DIR>>$",
         "run_cmd_out1": "tmp-stdout.tmp",
         "run_cmd_out2": "tmp-stderr.tmp",
         "run_output_files": []
       }
-    },
-    "anton-net": {
-      "ignore_return_code": "no",
-      "run_time": {
-        "output_invariant_of_repeat": "yes",
-        "run_cmd_main": "$<<CK_ENV_COMPILER_PYTHON_FILE>>$ ../generate_dataset.py --kernel $<<CK_KERNEL_LIST>>$ --platform=$<<CK_TARGET_ARCHITECTURE>>$ --output_dir=$<<CK_OUTPUT_DIR>>$/Antonet --load_matrix_from_csv ../dataset/AntonNet.csv",
-        "run_cmd_out1": "tmp-stdout.tmp",
-        "run_cmd_out2": "tmp-stderr.tmp",
-        "run_output_files": [
-          "tmp-ck-timer.json",
-          "tmp-ck-output.bin",
-          "tmp-ck-output.json"
-        ]
-      }
     }
   },
   "run_deps": {
-    "lib-clblast": {
-      "local": "yes",
-      "name": "CLBlast MultiConf ",
-      "skip_pruning_by_other_deps": "yes",
-      "sort": 10,
-      "tags": "lib,clblast,multiconf,tune"
-    },
     "python": {
       "local": "yes",
       "name": "python",
